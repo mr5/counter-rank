@@ -51,7 +51,13 @@ $counterRank->top10();
 $counterRank->down10();
 ```
 ## JSClientHandler 的使用
-`JSClientHandler` 是一个用于生成 JS 客户端的工具类。它实现了 get、increase、获取 rank 功能，并且支持 token 验证。 
+`JSClientHandler` 是一个用于生成 JS 客户端的工具类。
+它可以实现以下功能：
+* token 验证
+* get: 读取指定分组指定键的数值;
+* increase: 递增;
+* rank: 获取排名;
+* 指定 callback ，以实现 JsonP
 
 以下是一个自定义控制器参考，请根据自己使用的框架以及需求进行修改，另外还建议阅读 [`JSClientHandler.php`](lib/mr5/CounterRank/JSClientHandler.php) 的源代码，内含详细的 PHP Doc：
 ```php
