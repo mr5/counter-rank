@@ -266,7 +266,7 @@ class JSClientHandler
             if(!preg_match($this->callbackNameRegex, $userCallback)) {
                 $this->outputError('invalid callback name.');
             }
-            $this->output("{$userCallback}({$items})");
+            $this->output("{$userCallback}({$items});");
         } else {
             $this->output($items);
         }

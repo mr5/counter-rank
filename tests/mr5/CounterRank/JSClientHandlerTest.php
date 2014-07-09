@@ -43,11 +43,11 @@ class JSClientHandlerTest extends \PHPUnit_Framework_TestCase
     {
 
         $this->jsHandler->handleGet($this->tokens[$this->groupName], $this->groupName, 'testHandleGetKey', 'testCallback');
-        $this->assertEquals("testCallback(null)", $this->jsHandler->getLastOutput());
+        $this->assertEquals("testCallback(null);", $this->jsHandler->getLastOutput());
 
         $this->counterRank->create('testGet', 1);
         $this->jsHandler->handleGet($this->tokens[$this->groupName], $this->groupName, 'testGet', 'testCallback2');
-        $this->assertEquals("testCallback2(1)", $this->jsHandler->getLastOutput());
+        $this->assertEquals("testCallback2(1);", $this->jsHandler->getLastOutput());
         // 不带 callback
         $this->jsHandler->handleGet($this->tokens[$this->groupName], $this->groupName, 'testGet', '');
         $this->assertEquals("1", $this->jsHandler->getLastOutput());
@@ -56,7 +56,7 @@ class JSClientHandlerTest extends \PHPUnit_Framework_TestCase
         $this->counterRank->create('testGet2', 2);
         $this->counterRank->create('testGet3', 3);
         $this->jsHandler->handleGet($this->tokens[$this->groupName], $this->groupName, 'testGet_testGet2_testGet3', 'testCallback3');
-        $this->assertEquals('testCallback3({"testGet":1,"testGet2":2,"testGet3":3})', $this->jsHandler->getLastOutput());
+        $this->assertEquals('testCallback3({"testGet":1,"testGet2":2,"testGet3":3});', $this->jsHandler->getLastOutput());
     }
 
     /**
@@ -64,11 +64,13 @@ class JSClientHandlerTest extends \PHPUnit_Framework_TestCase
      */
     public function testHandleIncrease()
     {
-        $this->jsHandler->handleIncrease($this->tokens[$this->groupName], $this->groupName, 'testHandleIncreaseKey', 'increaseCallback');
-        $this->assertEquals('increaseCallback(1)', $this->jsHandler->getLastOutput());
+        $this->counterRank->create('testHandleIncreaseKey');
 
         $this->jsHandler->handleIncrease($this->tokens[$this->groupName], $this->groupName, 'testHandleIncreaseKey', 'increaseCallback');
-        $this->assertEquals('increaseCallback(2)', $this->jsHandler->getLastOutput());
+        $this->assertEquals('increaseCallback(1);', $this->jsHandler->getLastOutput());
+
+        $this->jsHandler->handleIncrease($this->tokens[$this->groupName], $this->groupName, 'testHandleIncreaseKey', 'increaseCallback');
+        $this->assertEquals('increaseCallback(2);', $this->jsHandler->getLastOutput());
 
         $this->jsHandler->handleIncrease($this->tokens[$this->groupName], $this->groupName, 'testHandleIncreaseKey');
         $this->assertEquals('3', $this->jsHandler->getLastOutput());
@@ -121,16 +123,16 @@ class JSClientHandlerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(json_encode($down10), $this->jsHandler->getLastOutput());
 
         $this->jsHandler->handleRank($this->tokens[$this->groupName], $this->groupName, 'asc', 10, 'rankCallback');
-        $this->assertEquals('rankCallback('.json_encode($down10).')', $this->jsHandler->getLastOutput());
+        $this->assertEquals('rankCallback('.json_encode($down10).');', $this->jsHandler->getLastOutput());
 
         $this->jsHandler->handleRank($this->tokens[$this->groupName], $this->groupName, 'desc', 10, 'rankCallback');
-        $this->assertEquals('rankCallback('.json_encode($top10).')', $this->jsHandler->getLastOutput());
+        $this->assertEquals('rankCallback('.json_encode($top10).');', $this->jsHandler->getLastOutput());
 
         $this->jsHandler->handleTop10($this->tokens[$this->groupName], $this->groupName, 'rankCallback');
-        $this->assertEquals('rankCallback('.json_encode($top10).')', $this->jsHandler->getLastOutput());
+        $this->assertEquals('rankCallback('.json_encode($top10).');', $this->jsHandler->getLastOutput());
 
         $this->jsHandler->handleDown10($this->tokens[$this->groupName], $this->groupName, 'rankCallback');
-        $this->assertEquals('rankCallback('.json_encode($down10).')', $this->jsHandler->getLastOutput());
+        $this->assertEquals('rankCallback('.json_encode($down10).');', $this->jsHandler->getLastOutput());
 
     }
     protected function tearDown()

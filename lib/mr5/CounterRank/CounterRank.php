@@ -224,31 +224,36 @@ class CounterRank
      *
      * @param string $key 键名
      * @param int $stepSize 递增步长，如为负数则是递减
+     * @param bool  $existCheck 是否检查 key 的存在
      *
-     * @return int|float the new value
+     * @return int|float|null the new value
      */
-    public function increase($key, $stepSize)
+    public function increase($key, $stepSize, $existCheck=true)
     {
+
+        if($existCheck && !is_numeric($this->get($key))) {
+            return null;
+        }
         return $this->redis->zIncrBy($this->groupName, $stepSize, $key);
     }
-
     /**
      * 递增多个 item
      * @param array $keys
      * @param int|float $stepSize
-     *
+     * @param bool  $existCheck 是否检查 key 的存在
      * @return array
      */
-    public function mIncrease(array $keys, $stepSize)
+    public function mIncrease(array $keys, $stepSize, $existCheck=true)
     {
         $returns = array();
 
         foreach ($keys as $key) {
-            $returns[$key] = $this->increase($key, $stepSize);
+            $returns[$key] = $this->increase($key, $stepSize, $existCheck);
         }
 
         return $returns;
     }
+
 
     /**
      * 排序
