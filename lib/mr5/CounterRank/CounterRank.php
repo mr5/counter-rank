@@ -1,0 +1,324 @@
+<?php
+
+namespace mr5\CounterRank;
+
+// +----------------------------------------------------------------------
+// | [counter-rank]
+// +----------------------------------------------------------------------
+// | Author: Mr.5 <mr5.simple@gmail.com>
+// +----------------------------------------------------------------------
+// + Datetime: 14-7-3 下午4:25
+// +----------------------------------------------------------------------
+// + CounterRank.php  计数与排名，主要是对 redis 一系列的方法进行了封装
+// +----------------------------------------------------------------------
+/**
+ * 计数与排名，主要是对 redis zScore 一系列的方法进行了封装
+ *
+ * @example
+ * ``
+ * ```php
+ *
+// 命名空间 namespace 用于区分不同的项目。分组名是一类 items 的分组。比如要统计的是文章，则分组名可以是 articles，评论的分组名可以是 comments。
+$counterRank = new CounterRank('redis_host', 'redis_port', 'namespace', '分组名');
+// 创建一个item，create 方法可以接收一个数字作为默认值，留空则为0。下面的`900310`可以看做是文章 ID、评论 ID 等等。
+$counterRank->create('900310', 0);
+// 删除一个分组，`articles` 是分组名
+$counterRank->deleteGroup('articles');
+// 删除一个 item
+$counterRank->delete('900310');
+// 递增指定键名的值，如为负数则为递减。这里对 `900310` 这篇文章递增了 1
+$counterRank->increase('900310', 1);
+// 递减
+$counterRank->increase('900310', -1);
+// 倒序排序，最多 10 个。
+$counterRank->rank(10, 'desc');
+// 正序排序，最多 10 个
+$counterRank->rank(10, 'asc');
+// 最高的 10 个
+$counterRank->top10();
+// 最低的 10 个
+$counterRank->down10();
+
+ * ```
+ */
+
+
+class CounterRank
+{
+
+
+    /**
+     *
+     * @var string  redis host
+     */
+    private $host;
+
+    /**
+     *
+     * @var int redis port
+     */
+    private $port;
+
+    /**
+     *
+     * @var string  命名空间
+     */
+    private $namespace;
+
+
+    /**
+     * @var \Redis  redis 实例
+     */
+    private $redis;
+
+    /**
+     *
+     * @var string 分组名
+     */
+    private $groupName = NULL;
+
+    /**
+     * @var bool 是否使用浮点数
+     */
+    private $useFloat = false;
+
+    /**
+     * construct
+     *
+     * @param string    $host redis host
+     * @param int       $port redis port
+     * @param string    $namespace  顶级命名空间，通常是项目名称
+     * @param string    $groupName  分组名，通常是实体名称，如 articles、comments
+     * @param bool      $useFloat   使用浮点数，默认是 false
+     *
+     */
+    public function __construct($host, $port, $namespace, $groupName, $useFloat = false)
+    {
+        $this->host = $host;
+        $this->port = $port;
+        $this->namespace = $namespace;
+        $this->setGroupName($groupName);
+        $this->useFloat = $useFloat;
+
+        $this->redis = new \Redis();
+        $this->redis->connect($host, $port);
+    }
+
+
+    /**
+     * 获取单个 item 的值
+     *
+     * @param string $key
+     *
+     * @return int|float
+     */
+    public function get($key)
+    {
+        $score = $this->redis->zScore($this->groupName, $key);
+        if (is_numeric($score) && !$this->useFloat) {
+            $score = intval($score);
+        }
+        return $score;
+    }
+
+    /**
+     * 获取多个 item
+     *
+     * @param array $keys
+     *
+     * @return array
+     */
+    public function mGet(array $keys)
+    {
+        $items = array();
+        foreach ($keys as $key) {
+            $score = $this->redis->zScore($this->groupName, $key);
+            if (is_numeric($score)) {
+                if(!$this->useFloat) {
+                    $score = intval($score);
+
+                }
+                $items[$key] = $score;
+            }
+        }
+
+        return $items;
+    }
+
+
+    /**
+     * 创建一个 item
+     *
+     * @param string $key item 键名
+     * @param int|float $defaultValue 默认值，默认是 0
+     *
+     * @return Number of values added
+     */
+    public function create($key, $defaultValue = 0)
+    {
+        return $this->redis->zAdd($this->groupName, $defaultValue, $key);
+    }
+
+    /**
+     * 创建多个 item
+     *
+     * @param array $items
+     *
+     * @return Number of values added
+     */
+    public function mCreate($items)
+    {
+        $_params = array();
+        $_params[] = $this->groupName;
+        foreach ($items as $_k => $_item) {
+            $_params[] = $_item;
+            $_params[] = $_k;
+        }
+
+//        var_dump($_items);
+        return call_user_func_array(array($this->redis, 'zAdd'), $_params);
+    }
+
+    /**
+     * 删除指定 key 的 item
+     *
+     * @param string $key
+     *
+     * @return int   Number of deleted fields
+     */
+    public function delete($key)
+    {
+        return $this->redis->zRem($this->groupName, $key);
+    }
+
+    /**
+     * 通过 keys 数组删除多个 item
+     *
+     * @param array $keys
+     *
+     * @return int     Number of deleted values
+     */
+    public function mDelete(array $keys)
+    {
+        $params = array();
+        $params[] = $this->groupName;
+        $params = array_merge($params, $keys);
+        return call_user_func_array(array($this->redis, 'zRem'), $params);
+    }
+
+    /**
+     * 删除分组
+     *
+     * @param $groupName
+     *
+     * @return bool
+     */
+    public function deleteGroup($groupName)
+    {
+        return $this->redis->delete($this->nameSpacing($groupName)) == 1;
+    }
+
+
+    /**
+     * 递增指定键名的 item
+     *
+     * @param string $key 键名
+     * @param int $stepSize 递增步长，如为负数则是递减
+     *
+     * @return int|float the new value
+     */
+    public function increase($key, $stepSize)
+    {
+        return $this->redis->zIncrBy($this->groupName, $stepSize, $key);
+    }
+
+    /**
+     * 递增多个 item
+     * @param array $keys
+     * @param int|float $stepSize
+     *
+     * @return array
+     */
+    public function mIncrease(array $keys, $stepSize)
+    {
+        $returns = array();
+
+        foreach ($keys as $key) {
+            $returns[$key] = $this->increase($key, $stepSize);
+        }
+
+        return $returns;
+    }
+
+    /**
+     * 排序
+     *
+     * @param $limit
+     * @param string $type  默认是倒序 desc 排序(大数到小数目)，可选 asc 正序排序(小数字到大数字)
+     * @return array|bool|string
+     */
+    public function rank($limit, $type = 'desc')
+    {
+        $type = strtolower($type);
+        $type = in_array($type, array('desc', 'asc')) ? $type : 'desc';
+
+        if ($type == 'desc') {
+            $items = $this->redis->zRevRange($this->groupName, 0, $limit - 1, true);
+        } else {
+            $items = $this->redis->zRevRange($this->groupName, 0 - $limit, -1, true);
+            $items = array_reverse($items);
+        }
+
+        return $items;
+
+    }
+
+    /**
+     * top10
+     *
+     * @return array|bool|string
+     */
+    public function top10()
+    {
+        return $this->rank(10, 'desc');
+    }
+
+    /**
+     * down10
+     *
+     * @return array|bool|string
+     */
+    public function down10()
+    {
+        return $this->rank(10, 'asc');
+    }
+
+    /**
+     * 设置新的分组名
+     * @param string $groupName
+     */
+    public function setGroupName($groupName)
+    {
+        if($groupName != null) {
+            $this->groupName = $this->nameSpacing($groupName);
+        }
+    }
+
+    /**
+     * 为分组名加上命名空间
+     *
+     * @param string $groupName
+     *
+     * @return string
+     */
+    private function nameSpacing($groupName)
+    {
+
+        if($this->namespace) {
+            $groupName = $this->namespace . ':' . $groupName;;
+        }
+        return $groupName;
+    }
+
+
+}

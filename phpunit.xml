@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<phpunit bootstrap="tests/bootstrap.php" colors="true" strict="true">
+    <testsuites>
+        <testsuite name="CouterRank Test Suite">
+            <directory>tests/mr5/</directory>
+        </testsuite>
+    </testsuites>
+
+    <groups>
+        <exclude>
+            <group>ext-redis</group>
+        </exclude>
+    </groups>
+
+    <filter>
+        <whitelist>
+            <directory suffix=".php">lib/mr5/</directory>
+        </whitelist>
+    </filter>
+
+    <php>
+        <!-- Redis -->
+        <const name="REDIS_SERVER_HOST" value="127.0.0.1" />
+        <const name="REDIS_SERVER_PORT" value="6379" />
+        <const name="REDIS_NAMESPACE" value="__unitTest___" />
+
+    </php>
+</phpunit>
