@@ -259,7 +259,7 @@ class JSClientHandler
         if (is_array($items)) {
             $items = json_encode($items);
         }
-        if ($items === false) {
+        if ($items === false || $items === null) {
             $items = 'null';
         }
         if ($userCallback) {

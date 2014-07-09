@@ -68,6 +68,9 @@ class JSClientHandlerTest extends \PHPUnit_Framework_TestCase
 
         $this->jsHandler->handleIncrease($this->tokens[$this->groupName], $this->groupName, 'testHandleIncreaseKey', 'increaseCallback');
         $this->assertEquals('increaseCallback(1);', $this->jsHandler->getLastOutput());
+        // 不存在的 key
+        $this->jsHandler->handleIncrease($this->tokens[$this->groupName], $this->groupName, 'testHandleIncreaseKeyDoesNotExist', 'increaseCallback');
+        $this->assertEquals('increaseCallback(null);', $this->jsHandler->getLastOutput());
 
         $this->jsHandler->handleIncrease($this->tokens[$this->groupName], $this->groupName, 'testHandleIncreaseKey', 'increaseCallback');
         $this->assertEquals('increaseCallback(2);', $this->jsHandler->getLastOutput());
