@@ -24,7 +24,7 @@ composer install
 	<const name="REDIS_NAMESPACE" value="__unitTest___" />
 </php>
 ```
-如你要运行本类库的单元测试，请注意其中 `REDIS_NAMESPACE` 定义的命名空间，以防误删你的 Redis 数据。 
+如你要运行本类库的单元测试，请注意其中 `REDIS_NAMESPACE` 定义的命名空间，以防误删你的 Redis 数据。如有必要，可以修改该值。 
 ## 基础使用
 ```php
 use mr5\CounterRank\CounterRank;
@@ -51,7 +51,7 @@ $counterRank->top10();
 $counterRank->down10();
 ```
 ## JSClientHandler 的使用
-`JSClientHandler` 是一个用于生成 JS 客户端的工具类。它实现了
+`JSClientHandler` 是一个用于生成 JS 客户端的工具类。它实现了 get、increase、获取 rank 功能，并且支持 token 验证。 
 
 以下是一个自定义控制器参考，请根据自己使用的框架以及需求进行修改，另外还建议阅读 [`JSClientHandler.php`](lib/mr5/CounterRank/JSClientHandler.php) 的源代码，内含详细的 PHP Doc：
 ```php
