@@ -173,7 +173,7 @@ class JSClientHandler
         if (is_array($keys) && count($keys) > 1) {
             $items = $this->counterRank->mIncrease($keys, $this->increaseStepSize);
         } else {
-            $items = $this->counterRank->increase($keys, $this->increaseStepSize);
+            $items = $this->counterRank->increase($keys[0], $this->increaseStepSize);
         }
 
         $this->outputResult($items, $userCallback);
@@ -234,7 +234,7 @@ class JSClientHandler
         if (!$userToken) {
             $this->outputError('token 未指定');
         }
-        if ($userToken != $this->tokens[$userGroupName]) {
+        if (!isset($this->tokens[$userGroupName]) || $userToken != $this->tokens[$userGroupName]) {
             $this->outputError('token 不正确');
         }
         $userGroupName = trim($userGroupName);
