@@ -1,5 +1,5 @@
 ## 简介
-Counter-Rank 是一个使用 PHP 语言编写的基于 Redis 的排名与计数类库，主要是对 Redis 的 zscore 操作进行了封装。并提供了一个 [`JSClientHandler`](lib/mr5/CounterRank/JSClientHandler.php) 类，可以快速地生成 JSONP 接口用于满足一些静态页面的计数需求以及将数字渲染到页面。
+Counter-Rank 是一个使用 PHP 语言编写的基于 Redis 的排名与计数类库，主要是对 Redis 的 zset 操作进行了封装。并提供了一个 [`JSClientHandler`](lib/mr5/CounterRank/JSClientHandler.php) 类，可以快速地生成 JSONP 接口用于满足一些静态页面的计数需求以及将数字渲染到页面。
 
 本类库的源代码中有详细的注释，你可以使用类 PHPDoc 的工具生成 classes reference manual 。
 
