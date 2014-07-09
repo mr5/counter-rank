@@ -273,9 +273,7 @@ class CounterRank
             $_items = $this->redis->zRevRange($this->groupName, 0 - $limit, -1, true);
             $items = array();
             if($_items) {
-                foreach($_items as $_k=>$_item) {
-                    array_unshift($items, array($_k=>$_item));
-                }
+                $items = array_reverse($_items, true);
             }
         }
 
