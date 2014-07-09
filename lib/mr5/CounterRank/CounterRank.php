@@ -270,12 +270,16 @@ class CounterRank
         if ($type == 'desc') {
             $items = $this->redis->zRevRange($this->groupName, 0, $limit - 1, true);
         } else {
-            $items = $this->redis->zRevRange($this->groupName, 0 - $limit, -1, true);
-            $items = array_reverse($items);
+            $_items = $this->redis->zRevRange($this->groupName, 0 - $limit, -1, true);
+            $items = array();
+            if($_items) {
+                foreach($_items as $_k=>$_item) {
+                    array_unshift($items, array($_k=>$_item));
+                }
+            }
         }
 
         return $items;
-
     }
 
     /**
