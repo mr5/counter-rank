@@ -29,18 +29,32 @@ composer install
 ```php
 use mr5\CounterRank\CounterRank;
 
-// 命名空间 namespace 用于区分不同的项目。分组名是一类 items 的分组。比如要统计的是文章，则分组名可以是 articles，评论的分组名可以是 comments。
-$counterRank = new CounterRank('redis_host', 'redis_port', 'namespace', '分组名');
-// 创建一个item，create 方法可以接收一个数字作为默认值，留空则为0。下面的`900310`可以看做是文章 ID、评论 ID 等等。
+// 命名空间 namespace 用于区分不同的项目。
+// 分组名是一类 items 的分组。
+// 比如要统计的是文章，则分组名可以是 articles，评论的分组名可以是 comments。
+$counterRank = new CounterRank(
+	'redis_host', 
+	'redis_port', 
+	'namespace', 
+	'分组名'
+);
+
+// 创建一个item，create 方法可以接收一个数字作为默认值，留空则为0。
+// 下面的`900310`可以看做是文章 ID、评论 ID 等等。
 $counterRank->create('900310', 0);
+
 // 删除一个分组，`articles` 是分组名
 $counterRank->deleteGroup('articles');
+
 // 删除一个 item
 $counterRank->delete('900310');
-// 递增指定键名的值，如为负数则为递减。这里对 `900310` 这篇文章递增了 1
+
+// 递增指定键名的值，如为负数则为递减。
+// 这里对 `900310` 这篇文章递增了 1
 $counterRank->increase('900310', 1);
 // 递减
 $counterRank->increase('900310', -1);
+
 // 倒序排序，最多 10 个。
 $counterRank->rank(10, 'desc');
 // 正序排序，最多 10 个
@@ -49,7 +63,12 @@ $counterRank->rank(10, 'asc');
 $counterRank->top10();
 // 最低的 10 个
 $counterRank->down10();
-// 设置当操作一个不存在的 keys 时的处理闭包。该闭包将接收两个参数，第一个参数是 key ，第二个参数是当前 CounterRank 对象。如修复后该 key 可以操作时返回 true，否则返回 false。可以用于自动创建 item
+
+// 设置当操作一个不存在的 keys 时的处理闭包。
+// 该闭包将接收两个参数，第一个参数是 key ，
+// 第二个参数是当前 CounterRank 对象。
+// 如修复后该 key 可以操作时返回 true，否则返回 false。
+// 可以用于自动创建 item
 $counterRank->setFixMiss(function($key, CounterRank $counterRank) {
             return $counterRank->create($key, 0) > 0;
 });
