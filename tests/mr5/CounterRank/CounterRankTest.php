@@ -143,6 +143,20 @@ class CounterRankTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($top10, $this->counterRank->top10());
     }
 
+    /**
+     * 测试 fixMiss 闭包
+     */
+    public function testFixMiss()
+    {
+        $this->assertNull($this->counterRank->increase('inexistense', 10));
+
+        $this->counterRank->setFixMiss(function($key, CounterRank $counterRank) {
+            return $counterRank->create($key, 1000) > 0;
+        });
+
+        $this->assertEquals(1010, $this->counterRank->increase('inexistense', 10));
+
+    }
 
     protected function tearDown()
     {

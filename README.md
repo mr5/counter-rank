@@ -49,6 +49,10 @@ $counterRank->rank(10, 'asc');
 $counterRank->top10();
 // 最低的 10 个
 $counterRank->down10();
+// 设置当操作一个不存在的 keys 时的处理闭包。该闭包将接收两个参数，第一个参数是 key ，第二个参数是当前 CounterRank 对象。如修复后该 key 可以操作时返回 true，否则返回 false。可以用于自动创建 item
+$counterRank->setFixMiss(function($key, CounterRank $counterRank) {
+            return $counterRank->create($key, 0) > 0;
+});
 ```
 ## JSClientHandler 的使用
 `JSClientHandler` 是一个用于生成 JS 客户端的工具类。

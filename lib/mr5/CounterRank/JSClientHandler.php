@@ -132,17 +132,27 @@ class JSClientHandler
     }
 
     /**
+     * 获取当前使用的 CounterRank 对象
+     *
+     * @return CounterRank
+     */
+    public function getCounterRankInstance()
+    {
+        return $this->counterRank;
+    }
+
+    /**
      * 处理 get 操作
      * 路径设计参考：/client.js/:token/:group/:item/get?callback=:callback
      *
-     * @param string $userToken     客户端用户提交的 token
+     * @param string $userHash     客户端用户提交的 token
      * @param string $userGroupName 客户端用户提交的分组名
      * @param string $userKeys      客户端用户提交的 item key
      * @param string $userCallback  客户端用户提交的 JsonP 回调函数，可留空，留空则直接输出值
      */
-    public function handleGet($userToken, $userGroupName, $userKeys, $userCallback = '')
+    public function handleGet($userHash, $userGroupName, $userKeys, $userCallback = '')
     {
-        $this->baseInfoCheck($userToken, $userGroupName);
+        $this->baseInfoCheck($userHash, $userGroupName);
 
 
         $keys = explode($this->keysSeparator, $userKeys);
@@ -159,14 +169,14 @@ class JSClientHandler
      * 递增处理
      * URL 设计参考： /client.js/:token/:group/:item/increase?callback=:callback
      *
-     * @param string $userToken
+     * @param string $userHash
      * @param string $userGroupName
      * @param string $userKeys
      * @param string $userCallback
      */
-    public function handleIncrease($userToken, $userGroupName, $userKeys, $userCallback = '')
+    public function handleIncrease($userHash, $userGroupName, $userKeys, $userCallback = '')
     {
-        $this->baseInfoCheck($userToken, $userGroupName);
+        $this->baseInfoCheck($userHash, $userGroupName);
 
         $keys = explode($this->keysSeparator, $userKeys);
 
@@ -184,15 +194,15 @@ class JSClientHandler
      * 排名处理
      * 路径设计参考：/client.js/:token/:group/rank/:limit?type=:type&callback=:callback
      *
-     * @param $userToken
+     * @param $userHash
      * @param $userGroupName
      * @param $userType
      * @param $userLimit
      * @param $userCallback
      */
-    public function handleRank($userToken, $userGroupName, $userType, $userLimit, $userCallback = '')
+    public function handleRank($userHash, $userGroupName, $userType, $userLimit, $userCallback = '')
     {
-        $this->baseInfoCheck($userToken, $userGroupName);
+        $this->baseInfoCheck($userHash, $userGroupName);
 
         $this->outputResult($this->counterRank->rank($userLimit, $userType), $userCallback);
     }
@@ -201,40 +211,40 @@ class JSClientHandler
      * top10 handler
      * 路径设计参考：/client.js/:token/:group/top10?callback=:callback
      *
-     * @param string $userToken
+     * @param string $userHash
      * @param string $userGroupName
      * @param string $userCallback
      */
-    public function handleTop10($userToken, $userGroupName, $userCallback = '')
+    public function handleTop10($userHash, $userGroupName, $userCallback = '')
     {
-        $this->handleRank($userToken, $userGroupName, 'desc', 10, $userCallback);
+        $this->handleRank($userHash, $userGroupName, 'desc', 10, $userCallback);
     }
 
     /**
      * down 10 handler
      * 路径设计参考：/client.js/:token/:group/down10?callback=:callback
      *
-     * @param string $userToken
+     * @param string $userHash
      * @param string $userGroupName
      * @param string $userCallback
      */
-    public function handleDown10($userToken, $userGroupName, $userCallback)
+    public function handleDown10($userHash, $userGroupName, $userCallback)
     {
-        $this->handleRank($userToken, $userGroupName, 'asc', 10, $userCallback);
+        $this->handleRank($userHash, $userGroupName, 'asc', 10, $userCallback);
     }
 
     /**
      * 基础信息检查：token 验证，设置分组名等等
      *
-     * @param string $userToken
+     * @param string $userHash
      * @param string $userGroupName
      */
-    private function baseInfoCheck($userToken, $userGroupName)
+    private function baseInfoCheck($userHash, $userGroupName)
     {
-        if (!$userToken) {
+        if (!$userHash) {
             $this->outputError('token 未指定');
         }
-        if (!isset($this->tokens[$userGroupName]) || $userToken != $this->tokens[$userGroupName]) {
+        if (!isset($this->tokens[$userGroupName]) || $userHash != $this->tokens[$userGroupName]) {
             $this->outputError('token 不正确');
         }
         $userGroupName = trim($userGroupName);

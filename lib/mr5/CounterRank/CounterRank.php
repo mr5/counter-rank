@@ -18,27 +18,26 @@ namespace mr5\CounterRank;
  * ``
  * ```php
  *
-// 命名空间 namespace 用于区分不同的项目。分组名是一类 items 的分组。比如要统计的是文章，则分组名可以是 articles，评论的分组名可以是 comments。
-$counterRank = new CounterRank('redis_host', 'redis_port', 'namespace', '分组名');
-// 创建一个item，create 方法可以接收一个数字作为默认值，留空则为0。下面的`900310`可以看做是文章 ID、评论 ID 等等。
-$counterRank->create('900310', 0);
-// 删除一个分组，`articles` 是分组名
-$counterRank->deleteGroup('articles');
-// 删除一个 item
-$counterRank->delete('900310');
-// 递增指定键名的值，如为负数则为递减。这里对 `900310` 这篇文章递增了 1
-$counterRank->increase('900310', 1);
-// 递减
-$counterRank->increase('900310', -1);
-// 倒序排序，最多 10 个。
-$counterRank->rank(10, 'desc');
-// 正序排序，最多 10 个
-$counterRank->rank(10, 'asc');
-// 最高的 10 个
-$counterRank->top10();
-// 最低的 10 个
-$counterRank->down10();
-
+ * // 命名空间 namespace 用于区分不同的项目。分组名是一类 items 的分组。比如要统计的是文章，则分组名可以是 articles，评论的分组名可以是 comments。
+ * $counterRank = new CounterRank('redis_host', 'redis_port', 'namespace', '分组名');
+ * // 创建一个item，create 方法可以接收一个数字作为默认值，留空则为0。下面的`900310`可以看做是文章 ID、评论 ID 等等。
+ * $counterRank->create('900310', 0);
+ * // 删除一个分组，`articles` 是分组名
+ * $counterRank->deleteGroup('articles');
+ * // 删除一个 item
+ * $counterRank->delete('900310');
+ * // 递增指定键名的值，如为负数则为递减。这里对 `900310` 这篇文章递增了 1
+ * $counterRank->increase('900310', 1);
+ * // 递减
+ * $counterRank->increase('900310', -1);
+ * // 倒序排序，最多 10 个。
+ * $counterRank->rank(10, 'desc');
+ * // 正序排序，最多 10 个
+ * $counterRank->rank(10, 'asc');
+ * // 最高的 10 个
+ * $counterRank->top10();
+ * // 最低的 10 个
+ * $counterRank->down10();
  * ```
  */
 
@@ -83,13 +82,20 @@ class CounterRank
     private $useFloat = false;
 
     /**
+     * 当对一个不存在的 key 进行操作时，执行的方法。如修复成功返回 true，否则返回 false。
+     *
+     * @var \Closure
+     */
+    private $fixMissClosure = null;
+
+    /**
      * construct
      *
-     * @param string    $host redis host
-     * @param int       $port redis port
-     * @param string    $namespace  顶级命名空间，通常是项目名称
-     * @param string    $groupName  分组名，通常是实体名称，如 articles、comments
-     * @param bool      $useFloat   使用浮点数，默认是 false
+     * @param string $host redis host
+     * @param int $port redis port
+     * @param string $namespace 顶级命名空间，通常是项目名称
+     * @param string $groupName 分组名，通常是实体名称，如 articles、comments
+     * @param bool $useFloat 使用浮点数，默认是 false
      *
      */
     public function __construct($host, $port, $namespace, $groupName, $useFloat = false)
@@ -134,7 +140,7 @@ class CounterRank
         foreach ($keys as $key) {
             $score = $this->redis->zScore($this->groupName, $key);
             if (is_numeric($score)) {
-                if(!$this->useFloat) {
+                if (!$this->useFloat) {
                     $score = intval($score);
 
                 }
@@ -224,26 +230,46 @@ class CounterRank
      *
      * @param string $key 键名
      * @param int $stepSize 递增步长，如为负数则是递减
-     * @param bool  $existCheck 是否检查 key 的存在
+     * @param bool $existCheck 是否检查 key 的存在
      *
-     * @return int|float|null the new value
+     * @return int|float|null 新值，如果返回 null 则表示 key 不存在
      */
-    public function increase($key, $stepSize, $existCheck=true)
+    public function increase($key, $stepSize, $existCheck = true)
     {
-
-        if($existCheck && !is_numeric($this->get($key))) {
+        if($existCheck && !$this->checkExist($key)) {
             return null;
         }
+
         return $this->redis->zIncrBy($this->groupName, $stepSize, $key);
+    }
+
+    /**
+     * 检查 key 是否存在，如不存在，则尝试使用指定的闭包修复。
+     *
+     * @param $key
+     * @return bool
+     */
+    private function checkExist($key)
+    {
+        if(!is_numeric($this->get($key))) {
+            if ($this->fixMissClosure != null
+                && call_user_func_array($this->fixMissClosure, array($key, $this))
+            ) {
+                return true;
+            }
+            return false;
+        } else {
+            return true;
+        }
     }
     /**
      * 递增多个 item
      * @param array $keys
      * @param int|float $stepSize
-     * @param bool  $existCheck 是否检查 key 的存在
+     * @param bool $existCheck 是否检查 key 的存在
      * @return array
      */
-    public function mIncrease(array $keys, $stepSize, $existCheck=true)
+    public function mIncrease(array $keys, $stepSize, $existCheck = true)
     {
         $returns = array();
 
@@ -259,7 +285,7 @@ class CounterRank
      * 排序
      *
      * @param $limit
-     * @param string $type  默认是倒序 desc 排序(大数到小数目)，可选 asc 正序排序(小数字到大数字)
+     * @param string $type 默认是倒序 desc 排序(大数到小数目)，可选 asc 正序排序(小数字到大数字)
      * @return array|bool|string
      */
     public function rank($limit, $type = 'desc')
@@ -272,7 +298,7 @@ class CounterRank
         } else {
             $_items = $this->redis->zRevRange($this->groupName, 0 - $limit, -1, true);
             $items = array();
-            if($_items) {
+            if ($_items) {
                 $items = array_reverse($_items, true);
             }
         }
@@ -306,7 +332,7 @@ class CounterRank
      */
     public function setGroupName($groupName)
     {
-        if($groupName != null) {
+        if ($groupName != null) {
             $this->groupName = $this->nameSpacing($groupName);
         }
     }
@@ -321,11 +347,28 @@ class CounterRank
     private function nameSpacing($groupName)
     {
 
-        if($this->namespace) {
+        if ($this->namespace) {
             $groupName = $this->namespace . ':' . $groupName;;
         }
         return $groupName;
     }
 
+    /**
+     * 设置当操作一个不存在的 keys 时的处理闭包。该闭包将接收两个参数，第一个参数是 key ，第二个参数是当前 CounterRank 对象。如修复后该 key 可以操作时返回 true，否则返回 false。
+     *
+     * @param \Closure $fixMissClosure 要 fix 的key
+     */
+    public function setFixMiss(\Closure $fixMissClosure)
+    {
+        $this->fixMissClosure = $fixMissClosure;
+    }
+
+    /**
+     * 移除 fixMiss 闭包
+     */
+    public function removeFixMiss()
+    {
+        $this->fixMissClosure = null;
+    }
 
 }
