@@ -94,7 +94,7 @@ use mr5\CounterRank\JSClientHandler;
 class ExampleController  extends Controller
 {
 	// 配置客户端的 token，键是分组名，值是 token 值。每个分组都必须指定，未指定的则不允许通过 JS Client 访问
-    protected $token = array(
+    protected $tokens = array(
         'articles' => '1234567890JQK',
         'comments' => 'abcdefghijk'
     );
@@ -115,7 +115,7 @@ class ExampleController  extends Controller
 						$this->redis_host, 
 						$this->redis_port, 
 						$this->namespace, 
-						$this->token, 
+						$this->tokens, 
 						$this->increaseStepSize
 		);
     }
