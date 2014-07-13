@@ -111,38 +111,68 @@ class ExampleController  extends Controller
 
     public function __construct()
     {
-        $this->handlerInstance = new JSClientHandler($this->redis_host, $this->redis_port, $this->namespace, $this->token, $this->increaseStepSize);
+        $this->handlerInstance = new JSClientHandler(
+						$this->redis_host, 
+						$this->redis_port, 
+						$this->namespace, 
+						$this->token, 
+						$this->increaseStepSize
+		);
     }
 
     // 读取
     public function getAction()
     {
-        $this->handlerInstance->handleGet($_REQUEST['token'], $_REQUEST['group'], $_REQUEST['keys'], $_REQUEST['callback']);
+        $this->handlerInstance->handleGet(
+			$_REQUEST['token'], 
+			$_REQUEST['group'], 
+			$_REQUEST['keys'], 
+			$_REQUEST['callback']
+		);
     }
 
     // 递增
     public function increaseAction()
     {
-        $this->handlerInstance->handleIncrease($_REQUEST['token'], $_REQUEST['group'], $_REQUEST['keys'], $_REQUEST['callback']);
+        $this->handlerInstance->handleIncrease(
+			$_REQUEST['token'], 
+			$_REQUEST['group'], 
+			$_REQUEST['keys'], 
+			$_REQUEST['callback']
+		);
     }
 
     // 排名
     public function rankAction()
     {
-        $this->handlerInstance->handleRank($_REQUEST['token'], $_REQUEST['group'], $_REQUEST['type'], $_REQUEST['limit'], $_REQUEST['callback']);
+        $this->handlerInstance->handleRank(
+			$_REQUEST['token'], 
+			$_REQUEST['group'], 
+			$_REQUEST['type'], 
+			$_REQUEST['limit'], 
+			$_REQUEST['callback']
+		);
     }
 
     // 最高的十个数据
     public function top10Action()
     {
-        $this->handlerInstance->handleTop10($_REQUEST['token'], $_REQUEST['group'], $_REQUEST['callback']);
+        $this->handlerInstance->handleTop10(
+			$_REQUEST['token'], 
+			$_REQUEST['group'], 
+			$_REQUEST['callback']
+		);
 
     }
 
     // 最低的十个数据
     public function down10Action()
     {
-        $this->handlerInstance->handleDown10($_REQUEST['token'], $_REQUEST['group'], $_REQUEST['callback']);
+        $this->handlerInstance->handleDown10(
+			$_REQUEST['token'], 
+			$_REQUEST['group'], 
+			$_REQUEST['callback']
+		);
 
     }
 }
