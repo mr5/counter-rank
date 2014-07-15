@@ -1,3 +1,7 @@
+[![Build Status](https://travis-ci.org/mr5/counter-rank.svg)](https://travis-ci.org/mr5/counter-rank)
+[![Still Maintained](http://stillmaintained.com/mr5/counter-rank.png)](http://stillmaintained.com/mr5/counter-rank)
+[![License](https://poser.pugx.org/mr5/counter-rank/license.svg)](https://packagist.org/packages/mr5/counter-rank)
+
 ## 简介
 Counter-Rank 是一个使用 PHP 语言编写的、基于 Redis 的排名与计数类库，主要是对 Redis 的 zset 操作进行了封装。并提供了一个 [`JSClientHandler`](lib/mr5/CounterRank/JSClientHandler.php) 类，可以快速地生成 JsonP 接口用于满足一些静态页面的计数需求以及将数字渲染到页面。
 
