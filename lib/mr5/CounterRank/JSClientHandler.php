@@ -111,6 +111,12 @@ class JSClientHandler
     private $callbackNameRegex = '/^[a-zA-z\$_][\w_\$]*$/';
 
     /**
+     *
+     *
+     * @var \Closure
+     */
+    private $tokenVerifier = null;
+    /**
      * @param string    $redis_host         redis host
      * @param int       $redis_port         redis port
      * @param string    $namespace          顶级命名空间
@@ -152,7 +158,7 @@ class JSClientHandler
      */
     public function handleGet($userHash, $userGroupName, $userKeys, $userCallback = '')
     {
-        $this->baseInfoCheck($userHash, $userGroupName);
+        $this->baseInfoCheck($userHash, $userGroupName, 'get', $userKeys);
 
 
         $keys = explode($this->keysSeparator, $userKeys);
@@ -176,7 +182,7 @@ class JSClientHandler
      */
     public function handleIncrease($userHash, $userGroupName, $userKeys, $userCallback = '')
     {
-        $this->baseInfoCheck($userHash, $userGroupName);
+        $this->baseInfoCheck($userHash, $userGroupName, 'increase', $userKeys);
 
         $keys = explode($this->keysSeparator, $userKeys);
 
@@ -202,7 +208,7 @@ class JSClientHandler
      */
     public function handleRank($userHash, $userGroupName, $userType, $userLimit, $userCallback = '')
     {
-        $this->baseInfoCheck($userHash, $userGroupName);
+        $this->baseInfoCheck($userHash, $userGroupName, 'rank');
 
         $this->outputResult($this->counterRank->rank($userLimit, $userType), $userCallback);
     }
@@ -238,13 +244,15 @@ class JSClientHandler
      *
      * @param string $userHash
      * @param string $userGroupName
+     * @param string $operation
+     * @param string $keys
      */
-    private function baseInfoCheck($userHash, $userGroupName)
+    private function baseInfoCheck($userHash, $userGroupName, $operation, $keys = null)
     {
         if (!$userHash) {
             $this->outputError('token 未指定');
         }
-        if (!isset($this->tokens[$userGroupName]) || $userHash != $this->tokens[$userGroupName]) {
+        if (!$this->verifyToken($operation, $userHash, $this->tokens[$userGroupName], $userGroupName, $keys)) {
             $this->outputError('token 不正确');
         }
         $userGroupName = trim($userGroupName);
@@ -254,7 +262,6 @@ class JSClientHandler
         }
 
         $this->counterRank->setGroupName($userGroupName);
-
 
     }
 
@@ -313,5 +320,44 @@ class JSClientHandler
     private function outputError($message)
     {
         die("throw new Error('{$message}');");
+    }
+
+    /**
+     * token 验证
+     *
+     * @param string $operation 当前执行的操作
+     * @param string $userToken 用户提交的 token
+     * @param string $token     当前 group 的token
+     * @param string $group     当前分组名
+     * @param string $key       当前操作的 $key
+     *
+     * @return bool
+     */
+    protected function verifyToken($operation, $userToken, $token, $group, $key)
+    {
+        if($this->tokenVerifier instanceof \Closure) {
+            return call_user_func_array($this->tokenVerifier, func_get_args());
+        } else {
+            return $userToken === $token;
+        }
+    }
+
+    /**
+     * 设置 token 验证器，该验证器接收的参数与 verifyToken 相同，验证通过返回 true ，否则返回 false。
+     * @see JSClientHandler::verifyToke()
+     *
+     * @param callable $tokenVerifier
+     */
+    public function setTokenVerifier(\Closure $tokenVerifier)
+    {
+        $this->tokenVerifier = $tokenVerifier;
+    }
+
+    /**
+     * 移除 token 验证器
+     */
+    public function removeTokenVerifier()
+    {
+        $this->tokenVerifier = null;
     }
 }

@@ -138,6 +138,30 @@ class JSClientHandlerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('rankCallback('.json_encode($down10).');', $this->jsHandler->getLastOutput());
 
     }
+
+    /**
+     * 测试自定义 token 验证器
+     */
+    public function testSpecificalTokenVerifier()
+    {
+
+
+        $this->jsHandler->setTokenVerifier(function($operation, $userToken, $token, $group, $keys) {
+            $str = $token.$group;
+            if($keys) {
+                $str .= $keys;
+            }
+            return md5($str) == $userToken;
+        });
+        $this->counterRank->create('testTokenVerifier', 1100);
+        $this->jsHandler->handleGet(
+            md5($this->tokens['testHandleGroupName'] . $this->groupName . 'testTokenVerifier' ),
+            $this->groupName,
+            'testTokenVerifier'
+        );
+
+        $this->assertEquals(1100, $this->jsHandler->getLastOutput());
+    }
     protected function tearDown()
     {
         $this->counterRank->deleteGroup($this->groupName);
