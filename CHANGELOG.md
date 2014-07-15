@@ -1,0 +1,21 @@
+## Change Log
+
+### 0.02 (2014/07/15 10:46 +00:00)
+- [a4614f8](https://github.com/mr5/counter-rank/commit/a4614f8116e13cf82ffe8cdc477e9f734bed3676) 增加持久化帮助方法 (@mr5)
+
+### 0.01 (2014/07/15 02:52 +00:00)
+- [1b1c9da](https://github.com/mr5/counter-rank/commit/1b1c9da4d367a096fa8a4cf090f81de9f0ab8d00) initialize commit (@mr5)
+- [48be1ee](https://github.com/mr5/counter-rank/commit/48be1ee881616486a78044b0bc32a85d03c54b1d) update introduction (@mr5)
+- [3445d0d](https://github.com/mr5/counter-rank/commit/3445d0d53c9cecaf296f5df38699f93f7289dcfc) update introduction (@mr5)
+- [62f3118](https://github.com/mr5/counter-rank/commit/62f311806ea912fa7af70c41767eb9b54137d61b) update introduction (@mr5)
+- [930f2ba](https://github.com/mr5/counter-rank/commit/930f2bae02c5bc9f4f00370f49f4bd79519ae8eb) bug fixed (@mr5)
+- [d537e50](https://github.com/mr5/counter-rank/commit/d537e503719151fa2a1dae1c58eb92417cd5fc72) add key exist check (@mr5)
+- [8bf6544](https://github.com/mr5/counter-rank/commit/8bf6544a05bcf6265211909c2ebbf1b8629ed188) add key exist check (@mr5)
+- [d4d299d](https://github.com/mr5/counter-rank/commit/d4d299d756ba5470dbe85998b841d95b68ff8255) fixed returns of rank when asc type used (@mr5)
+- [6b8ae55](https://github.com/mr5/counter-rank/commit/6b8ae55a08ac97898bd5bafd57261d19b72ba910) fixed array_reverse (@mr5)
+- [39cb397](https://github.com/mr5/counter-rank/commit/39cb397b5ab574d8d7f52e68ae3a692b4c78d5fc) push permission test (@mr5)
+- [5066595](https://github.com/mr5/counter-rank/commit/50665954b6d61cb5cad825730f00d3d2eea412ef) 支持指定一个闭包处理当操作一个不存在的 key (@mr5)
+- [7eb3529](https://github.com/mr5/counter-rank/commit/7eb3529c3e9533fa63dcb35817a6a834665ea937) 更新说明 (@mr5)
+- [f051fcb](https://github.com/mr5/counter-rank/commit/f051fcb62fa585c0731a8ab4769250014f2bc9e9) update introduction (@mr5)
+- [b2a51ab](https://github.com/mr5/counter-rank/commit/b2a51abe9470610183a7f4171bf39243b564adda) update introduction (@mr5)
+- [0ff4c51](https://github.com/mr5/counter-rank/commit/0ff4c5138494bd706602964a75b1749f35ebc19c) 增加自定义 token 验证器 (@mr5)
