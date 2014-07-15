@@ -10,8 +10,10 @@ services:
   - redis-server
 
 before_script:
-  - travis_retry pecl install redis
+  - echo "extension = redis.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+  - phpenv rehash
   - travis_retry composer self-update
   - travis_retry composer install --prefer-source --no-interaction --dev
 
-script: vendor/bin/phpunit --verbose
+script:
+  - vendor/bin/phpunit --verbose
