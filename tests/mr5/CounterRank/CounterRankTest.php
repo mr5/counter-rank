@@ -19,11 +19,54 @@ class CounterRankTest extends \PHPUnit_Framework_TestCase
      * @var \mr5\counterRank\CounterRank
      */
     private $counterRank = null;
+    /**
+     * @var string
+     */
     private $groupName = 'CounterAndRankTest';
+    /**
+     * @var array
+     */
+    private $testData = array();
 
     protected function setUp()
     {
+
         $this->counterRank = new CounterRank(REDIS_SERVER_HOST, REDIS_SERVER_PORT, REDIS_NAMESPACE, $this->groupName);
+
+        $this->testData['items'] = array();
+
+        $_numbers = array();
+        for ($i = 0; $i < 1000; $i++) {
+            $_numbers[] = $i;
+        }
+        shuffle($_numbers);
+        foreach ($_numbers as $_num) {
+            $this->testData['items']['testSortItem_' . $_num] = (string)$_num;
+        }
+        $this->testData['top10'] = array(
+            "testSortItem_999" => "999",
+            "testSortItem_998" => "998",
+            "testSortItem_997" => "997",
+            "testSortItem_996" => "996",
+            "testSortItem_995" => "995",
+            "testSortItem_994" => "994",
+            "testSortItem_993" => "993",
+            "testSortItem_992" => "992",
+            "testSortItem_991" => "991",
+            "testSortItem_990" => "990"
+        );
+        $this->testData['down10'] = array(
+            "testSortItem_0" => "0",
+            "testSortItem_1" => "1",
+            "testSortItem_2" => "2",
+            "testSortItem_3" => "3",
+            "testSortItem_4" => "4",
+            "testSortItem_5" => "5",
+            "testSortItem_6" => "6",
+            "testSortItem_7" => "7",
+            "testSortItem_8" => "8",
+            "testSortItem_9" => "9"
+        );
     }
 
     /**
@@ -98,50 +141,93 @@ class CounterRankTest extends \PHPUnit_Framework_TestCase
      */
     public function testRank()
     {
-        $items = array();
 
-        $numbers = array();
-        for ($i = 0; $i < 1000; $i++) {
-            $numbers[] = $i;
-        }
-        shuffle($numbers);
-        foreach ($numbers as $_num) {
-            $items['testSortItem_' . $_num] = $_num;
+        $this->assertEquals(count($this->testData['items']), $this->counterRank->mCreate($this->testData['items']));
 
-        }
-
-        $this->assertEquals(1000, $this->counterRank->mCreate($items));
-        $top10 = array(
-            "testSortItem_999" => "999",
-            "testSortItem_998" => "998",
-            "testSortItem_997" => "997",
-            "testSortItem_996" => "996",
-            "testSortItem_995" => "995",
-            "testSortItem_994" => "994",
-            "testSortItem_993" => "993",
-            "testSortItem_992" => "992",
-            "testSortItem_991" => "991",
-            "testSortItem_990" => "990"
-        );
-        $down10 = array(
-            "testSortItem_0" => "0",
-            "testSortItem_1" => "1",
-            "testSortItem_2" => "2",
-            "testSortItem_3" => "3",
-            "testSortItem_4" => "4",
-            "testSortItem_5" => "5",
-            "testSortItem_6" => "6",
-            "testSortItem_7" => "7",
-            "testSortItem_8" => "8",
-            "testSortItem_9" => "9"
-        );
-
-        $this->assertEquals($top10, $this->counterRank->rank(10, 'desc'));
-        $this->assertNotEquals($top10, $this->counterRank->rank(10, 'asc'));
-        $this->assertEquals($down10, $this->counterRank->rank(10, 'asc'));
-        $this->assertEquals($down10, $this->counterRank->down10());
-        $this->assertEquals($top10, $this->counterRank->top10());
+        $this->assertEquals($this->testData['top10'], $this->counterRank->rank(10, 'desc'));
+        $this->assertNotEquals($this->testData['top10'], $this->counterRank->rank(10, 'asc'));
+        $this->assertEquals($this->testData['down10'], $this->counterRank->rank(10, 'asc'));
+        $this->assertEquals($this->testData['down10'], $this->counterRank->down10());
+        $this->assertEquals($this->testData['top10'], $this->counterRank->top10());
     }
+
+    /**
+     * 持久化帮助方法测试，持久化后删除
+     */
+    public function testPersistHelperWithDeleting()
+    {
+        $itemsSource = $this->testData['items'];
+        $this->assertEquals(count($this->testData['items']), $this->counterRank->mCreate($itemsSource));
+        $testItems = array();
+
+        $this->counterRank->persistHelper(function (array $_items) use (& $testItems) {
+            $testItems = array_merge($testItems, $_items);
+
+
+            $this->assertEmpty($this->counterRank->mGet(array_keys($_items)));
+
+            unset($_items);
+        }, CounterRank::PERSIST_WITH_DELETING);
+
+        arsort($itemsSource);
+        $this->assertEquals(json_encode($itemsSource) , json_encode($testItems));
+        unset($fileContentExcepted);
+        unset($itemsSource);
+    }
+    /**
+     * 持久化帮助方法测试，持久化后不执行任何操作
+     */
+    public function testPersistHelperWithNothing()
+    {
+        $itemsSource = $this->testData['items'];
+        $this->assertEquals(count($this->testData['items']), $this->counterRank->mCreate($itemsSource));
+        $testItems = array();
+
+        $this->counterRank->persistHelper(function (array $_items) use (& $testItems) {
+            $testItems = array_merge($testItems, $_items);
+
+            $this->assertEquals($_items, $this->counterRank->mGet(array_keys($_items)));
+
+            unset($_items);
+        }, CounterRank::PERSIST_WITH_NOTHING);
+
+        arsort($itemsSource);
+
+
+        $this->assertEquals(json_encode($itemsSource) , json_encode($testItems));
+        unset($itemsSource);
+        unset($testItems);
+    }
+    /**
+     * 持久化帮助方法测试，持久化后清零
+     */
+    public function testPersistHelperWithClearing()
+    {
+        $itemsSource = $this->testData['items'];
+        $this->assertEquals(count($this->testData['items']), $this->counterRank->mCreate($itemsSource));
+        $testItems = array();
+
+        $this->counterRank->persistHelper(function (array $_items) use (& $testItems) {
+            $testItems = array_merge($testItems, $_items);
+
+            $itemsExcepted = array();
+            foreach($_items AS $key=>$_v) {
+                $itemsExcepted[$key] = 0;
+            }
+
+            $this->assertEquals($itemsExcepted, $this->counterRank->mGet(array_keys($_items)));
+
+            unset($_items);
+            unset($itemsExcepted);
+        }, CounterRank::PERSIST_WITH_CLEARING);
+
+        arsort($itemsSource);
+        unset($itemsSource['testSortItem_0']);
+        $this->assertEquals(json_encode($itemsSource) , json_encode($testItems));
+        unset($fileContentExcepted);
+        unset($testItems);
+    }
+
 
     /**
      * 测试 fixMiss 闭包
@@ -150,7 +236,7 @@ class CounterRankTest extends \PHPUnit_Framework_TestCase
     {
         $this->assertNull($this->counterRank->increase('inexistense', 10));
 
-        $this->counterRank->setFixMiss(function($key, CounterRank $counterRank) {
+        $this->counterRank->setFixMiss(function ($key, CounterRank $counterRank) {
             return $counterRank->create($key, 1000) > 0;
         });
 

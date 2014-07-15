@@ -20,57 +20,57 @@ namespace mr5\CounterRank;
  * @example
  * ``
  * ```php
-// 控制器参考
-class ExampleController  extends Controller
-{
-    protected $token = array(
-        'articles' => '1234567890JQK',
-        'comments' => 'abcdefghijk'
-    );
-    protected $redis_host = 'localhost';
-    protected $redis_port = 6379;
-    protected $namespace = 'project_name';
-    protected $increaseStepSize = 1;
-
-    // @var JSClientHandler|null
-    protected $handlerInstance = null;
-    public function __construct()
-    {
-        $this->handlerInstance = new JSClientHandler($this->redis_host, $this->redis_port, $this->namespace, $this->token, $this->increaseStepSize);
-    }
-
-    // 读取
-    public function getAction()
-    {
-        $this->handlerInstance->handleGet($_REQUEST['token'], $_REQUEST['group'], $_REQUEST['keys'], $_REQUEST['callback']);
-    }
-
-    // 递增
-    public function increaseAction()
-    {
-        $this->handlerInstance->handleIncrease($_REQUEST['token'], $_REQUEST['group'], $_REQUEST['keys'], $_REQUEST['callback']);
-    }
-
-    // 排名
-    public function rankAction()
-    {
-        $this->handlerInstance->handleRank($_REQUEST['token'], $_REQUEST['group'], $_REQUEST['type'], $_REQUEST['limit'], $_REQUEST['callback']);
-    }
-
-    // 最高的十个数据
-    public function top10Action()
-    {
-        $this->handlerInstance->handleTop10($_REQUEST['token'], $_REQUEST['group'], $_REQUEST['callback']);
-
-    }
-
-    // 最低的十个数据
-    public function down10Action()
-    {
-        $this->handlerInstance->handleDown10($_REQUEST['token'], $_REQUEST['group'], $_REQUEST['callback']);
-
-    }
-}
+ * // 控制器参考
+ * class ExampleController  extends Controller
+ * {
+ * protected $token = array(
+ * 'articles' => '1234567890JQK',
+ * 'comments' => 'abcdefghijk'
+ * );
+ * protected $redis_host = 'localhost';
+ * protected $redis_port = 6379;
+ * protected $namespace = 'project_name';
+ * protected $increaseStepSize = 1;
+ *
+ * // @var JSClientHandler|null
+ * protected $handlerInstance = null;
+ * public function __construct()
+ * {
+ * $this->handlerInstance = new JSClientHandler($this->redis_host, $this->redis_port, $this->namespace, $this->token, $this->increaseStepSize);
+ * }
+ *
+ * // 读取
+ * public function getAction()
+ * {
+ * $this->handlerInstance->handleGet($_REQUEST['token'], $_REQUEST['group'], $_REQUEST['keys'], $_REQUEST['callback']);
+ * }
+ *
+ * // 递增
+ * public function increaseAction()
+ * {
+ * $this->handlerInstance->handleIncrease($_REQUEST['token'], $_REQUEST['group'], $_REQUEST['keys'], $_REQUEST['callback']);
+ * }
+ *
+ * // 排名
+ * public function rankAction()
+ * {
+ * $this->handlerInstance->handleRank($_REQUEST['token'], $_REQUEST['group'], $_REQUEST['type'], $_REQUEST['limit'], $_REQUEST['callback']);
+ * }
+ *
+ * // 最高的十个数据
+ * public function top10Action()
+ * {
+ * $this->handlerInstance->handleTop10($_REQUEST['token'], $_REQUEST['group'], $_REQUEST['callback']);
+ *
+ * }
+ *
+ * // 最低的十个数据
+ * public function down10Action()
+ * {
+ * $this->handlerInstance->handleDown10($_REQUEST['token'], $_REQUEST['group'], $_REQUEST['callback']);
+ *
+ * }
+ * }
  * ```
  */
 
@@ -116,15 +116,16 @@ class JSClientHandler
      * @var \Closure
      */
     private $tokenVerifier = null;
+
     /**
-     * @param string    $redis_host         redis host
-     * @param int       $redis_port         redis port
-     * @param string    $namespace          顶级命名空间
-     * @param array     $tokens             用于与客户端访问权限控制，格式是  array('groupName'=>'token', 'groupName1'=>'token1', 'groupNameN'=>'tokenN')
-     * @param int       $increaseStepSize   递增步长
-     * @param string    $keysSeparator      多个键间的分隔符，默认是 _
-     * @param bool      $useFloat           是否使用浮点数，默认不使用
-     * @param bool      $isOutput           是否输出，默认输出。不管是否输出，都可以通过 getLastOutput() 获取最后一次的输出数据
+     * @param string $redis_host redis host
+     * @param int $redis_port redis port
+     * @param string $namespace 顶级命名空间
+     * @param array $tokens 用于与客户端访问权限控制，格式是  array('groupName'=>'token', 'groupName1'=>'token1', 'groupNameN'=>'tokenN')
+     * @param int $increaseStepSize 递增步长
+     * @param string $keysSeparator 多个键间的分隔符，默认是 _
+     * @param bool $useFloat 是否使用浮点数，默认不使用
+     * @param bool $isOutput 是否输出，默认输出。不管是否输出，都可以通过 getLastOutput() 获取最后一次的输出数据
      */
     public function __construct($redis_host, $redis_port, $namespace, array $tokens, $increaseStepSize = 1, $keysSeparator = '_', $useFloat = false, $isOutput = true)
     {
@@ -151,10 +152,10 @@ class JSClientHandler
      * 处理 get 操作
      * 路径设计参考：/client.js/:token/:group/:item/get?callback=:callback
      *
-     * @param string $userHash     客户端用户提交的 token
+     * @param string $userHash 客户端用户提交的 token
      * @param string $userGroupName 客户端用户提交的分组名
-     * @param string $userKeys      客户端用户提交的 item key
-     * @param string $userCallback  客户端用户提交的 JsonP 回调函数，可留空，留空则直接输出值
+     * @param string $userKeys 客户端用户提交的 item key
+     * @param string $userCallback 客户端用户提交的 JsonP 回调函数，可留空，留空则直接输出值
      */
     public function handleGet($userHash, $userGroupName, $userKeys, $userCallback = '')
     {
@@ -252,7 +253,7 @@ class JSClientHandler
         if (!$userHash) {
             $this->outputError('token 未指定');
         }
-        if (!$this->verifyToken($operation, $userHash, $this->tokens[$userGroupName], $userGroupName, $keys)) {
+        if (!isset($this->tokens[$userGroupName]) || !$this->verifyToken($operation, $userHash, $this->tokens[$userGroupName], $userGroupName, $keys)) {
             $this->outputError('token 不正确');
         }
         $userGroupName = trim($userGroupName);
@@ -280,7 +281,7 @@ class JSClientHandler
             $items = 'null';
         }
         if ($userCallback) {
-            if(!preg_match($this->callbackNameRegex, $userCallback)) {
+            if (!preg_match($this->callbackNameRegex, $userCallback)) {
                 $this->outputError('invalid callback name.');
             }
             $this->output("{$userCallback}({$items});");
@@ -327,15 +328,15 @@ class JSClientHandler
      *
      * @param string $operation 当前执行的操作
      * @param string $userToken 用户提交的 token
-     * @param string $token     当前 group 的token
-     * @param string $group     当前分组名
-     * @param string $key       当前操作的 $key
+     * @param string $token 当前 group 的token
+     * @param string $group 当前分组名
+     * @param string $key 当前操作的 $key
      *
      * @return bool
      */
     protected function verifyToken($operation, $userToken, $token, $group, $key)
     {
-        if($this->tokenVerifier instanceof \Closure) {
+        if ($this->tokenVerifier instanceof \Closure) {
             return call_user_func_array($this->tokenVerifier, func_get_args());
         } else {
             return $userToken === $token;

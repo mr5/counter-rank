@@ -87,6 +87,24 @@ class CounterRank
      * @var \Closure
      */
     private $fixMissClosure = null;
+    /**
+     * 使用 persistHelper 持久化后不执行任何操作
+     *
+     * @see CounterRank::persistHelper()
+     */
+    const PERSIST_WITH_NOTHING = 0;
+    /**
+     * 使用 persistHelper 持久化后删除 item
+     *
+     * @see CounterRank::persistHelper()
+     */
+    const PERSIST_WITH_DELETING = 1;
+    /**
+     * 使用 persistHelper 持久化后清零 item
+     *
+     * @see CounterRank::persistHelper()
+     */
+    const PERSIST_WITH_CLEARING = 2;
 
     /**
      * construct
@@ -236,7 +254,7 @@ class CounterRank
      */
     public function increase($key, $stepSize, $existCheck = true)
     {
-        if($existCheck && !$this->checkExist($key)) {
+        if ($existCheck && !$this->checkExist($key)) {
             return null;
         }
 
@@ -251,7 +269,7 @@ class CounterRank
      */
     private function checkExist($key)
     {
-        if(!is_numeric($this->get($key))) {
+        if (!is_numeric($this->get($key))) {
             if ($this->fixMissClosure != null
                 && call_user_func_array($this->fixMissClosure, array($key, $this))
             ) {
@@ -262,6 +280,7 @@ class CounterRank
             return true;
         }
     }
+
     /**
      * 递增多个 item
      * @param array $keys
@@ -371,4 +390,59 @@ class CounterRank
         $this->fixMissClosure = null;
     }
 
+    /**
+     * 持久化帮助方法，可以遍历计数器中所有的元素
+     *
+     * @param callable $callback 回调函数，参数是一个键值对数组
+     * @param int $opAfter 后置操作，参考本类中 PERSIST_WITH_ 打头的常量，默认不执行任何操作
+     *
+     * @throws \InvalidArgumentException
+     */
+    public function persistHelper(\Closure $callback, $opAfter = self::PERSIST_WITH_NOTHING)
+    {
+        $total = $this->redis->zCard($this->groupName);
+
+        for ($i = 0; $i < $total; $i += 100) {
+
+            $break = false;
+            if (!in_array($opAfter, array(self::PERSIST_WITH_NOTHING, self::PERSIST_WITH_DELETING, self::PERSIST_WITH_CLEARING))) {
+                throw new \InvalidArgumentException('$opAfter(第二个) 参数不正确，请参考本类中 PERSIST_WITH_ 打头的常量。');
+            }
+            $start = 0;
+            $end = 100;
+
+            if($opAfter === self::PERSIST_WITH_NOTHING) {
+                $start = $i;
+                $end = $i + 100;
+            }
+
+            $items = $this->redis->zRevRange($this->groupName, $start, $end, true);
+
+            // 删除
+            if ($opAfter === self::PERSIST_WITH_DELETING) {
+                $params = array_merge(array($this->groupName), array_keys($items));
+                call_user_func_array(array($this->redis, 'zRem'), $params);
+                unset($params);
+            } // 清零
+            elseif ($opAfter === self::PERSIST_WITH_CLEARING) {
+                foreach ($items as $key => $val) {
+                    if ($items[$key] == 0) {
+                        unset($items[$key]);
+                        $break = true;
+                    } else {
+                        // 减去取出时的值
+                        $this->redis->zIncrBy($this->groupName, 0 - $val, $key);
+                    }
+                }
+            }
+
+            call_user_func($callback, $items);
+
+            if ($break) {
+                break;
+            }
+
+            unset($items);
+        }
+    }
 }

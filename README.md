@@ -72,6 +72,8 @@ $counterRank->down10();
 $counterRank->setFixMiss(function($key, CounterRank $counterRank) {
             return $counterRank->create($key, 0) > 0;
 });
+
+
 ```
 ## JSClientHandler 的使用
 `JSClientHandler` 是一个用于生成 JS 客户端的工具类。
@@ -83,6 +85,7 @@ $counterRank->setFixMiss(function($key, CounterRank $counterRank) {
 * 指定 callback ，以实现 JsonP
 
 以下是一个自定义控制器参考，请根据自己使用的框架以及需求进行修改，另外还建议阅读 [`JSClientHandler.php`](lib/mr5/CounterRank/JSClientHandler.php) 的源代码，内含详细的 PHP Doc：
+
 ```php
 use mr5\CounterRank\JSClientHandler;
 
@@ -176,4 +179,63 @@ class ExampleController  extends Controller
 
     }
 }
+
+```
+### 自定义 token 验证规则
+
+token 默认验证方式是判断用户递交的 token 是否等于约定的 token ，
+你可以通过传递一个闭包给 `setTokenVerifier` 方法来自定义这个验证规则。
+下面是自定义 tokenVerifier 的例子：
+```php
+
+$jsClientHandler->setTokenVerifier(function (
+			$operation,	// 操作名
+			$userToken, 	// 客户端提交的 token
+			$token, 		// 服务器端约定的 token
+			$group, 		// 分组名
+			$keys) {
+                $str = $token.$group;
+                if($keys) {
+                    $str .= $keys;
+                }
+                return md5($str) == $userToken;
+            });
+```
+
+## 持久化计数数据
+
+ [`CounterRank`](lib/mr5/CounterRank/CounterRank) 类提供了一个名为 `persistHelper` 方法来帮助你持久化计数器中的数据，如同步到 MySQL 数据库。`persistHelper` 方法接收两个参数，第一个参数是一个闭包，该闭包包含了你自定义的同步逻辑，闭包的参数是 items 键值对数组。第二个参数有三个选项：
+ 
+ * `CounterRank::PERSIST_WITH_DELETING`  持久化后的 items 删除，使用场景为使用 CounterRank 统计全量数据。一般需要配合 `$counterRank->setMissFix()` 来初始化不存在的键。
+ * `CounterRank::PERSIST_WITH_CLEARING`  持久化后的 items 清零，使用场景为使用 CounterRank 统计增量数据，在比如 MySQL 之类的持久化数据库系统中保留全量数据。
+ * `CounterRank::PERSIST_WITH_NOTHING`   持久化后不执行任何操作，使用场景为使用 redis 统计全量数据，并且作为主要持久化途径，其他持久化途径仅作为备份。
+
+下面是一个同步到数据库的例子：
+
+```php
+// 注意：本操作可能耗时很长，请在命令行下执行并根据实际情况加入操作系统计划任务，而不是通过 web 请求执行
+
+$counterRank = new CounterRank(
+	'redis_host', 
+	'redis_port', 
+	'namespace', 
+	'分组名'
+);
+$conn = mysql_connect('localhost', 'username', 'password');
+mysql_select_db('dbname', $conn);
+mysql_set_charset('utf8', $conn);
+
+$counterRank->persistHelper(function($items) {
+    $values = '';
+    foreach($items AS $post_id=>$heat) {
+        if($values != '') {
+            $values .= ',';
+        }
+        $values .= "({$post_id}, {$heat})";
+    }
+    mysql_query(
+        "INSERT INTO `posts`(post_id, heat) VALUES  {$values} ON DUPLICATE KEY UPDATE heat=values(heat);",
+        $conn
+    );
+});
 ```

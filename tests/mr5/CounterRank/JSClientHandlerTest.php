@@ -30,10 +30,48 @@ class JSClientHandlerTest extends \PHPUnit_Framework_TestCase
     );
     private $groupName = 'testHandleGroupName';
 
+    private $testData = array();
+
     protected function setUp()
     {
         $this->counterRank = new CounterRank(REDIS_SERVER_HOST, REDIS_SERVER_PORT, REDIS_NAMESPACE, $this->groupName, false);
         $this->jsHandler = new JSClientHandler(REDIS_SERVER_HOST, REDIS_SERVER_PORT, REDIS_NAMESPACE, $this->tokens, 1, '_', false, false);
+
+        $this->testData['items'] = array();
+
+        $_numbers = array();
+        for ($i = 0; $i < 1000; $i++) {
+            $_numbers[] = $i;
+        }
+        shuffle($_numbers);
+        foreach ($_numbers as $_num) {
+            $this->testData['items']['testSortItem_' . $_num] = $_num;
+
+        }
+        $this->testData['top10'] = array(
+            "testSortItem_999" => "999",
+            "testSortItem_998" => "998",
+            "testSortItem_997" => "997",
+            "testSortItem_996" => "996",
+            "testSortItem_995" => "995",
+            "testSortItem_994" => "994",
+            "testSortItem_993" => "993",
+            "testSortItem_992" => "992",
+            "testSortItem_991" => "991",
+            "testSortItem_990" => "990"
+        );
+        $this->testData['down10'] = array(
+            "testSortItem_0" => "0",
+            "testSortItem_1" => "1",
+            "testSortItem_2" => "2",
+            "testSortItem_3" => "3",
+            "testSortItem_4" => "4",
+            "testSortItem_5" => "5",
+            "testSortItem_6" => "6",
+            "testSortItem_7" => "7",
+            "testSortItem_8" => "8",
+            "testSortItem_9" => "9"
+        );
     }
 
     /**
@@ -85,57 +123,22 @@ class JSClientHandlerTest extends \PHPUnit_Framework_TestCase
      */
     public function testHandleRank()
     {
-        $items = array();
 
-        $numbers = array();
-        for ($i = 0; $i < 1000; $i++) {
-            $numbers[] = $i;
-        }
-        shuffle($numbers);
-        foreach ($numbers as $_num) {
-            $items['testSortItem_' . $_num] = $_num;
-
-        }
-        $this->assertEquals(1000, $this->counterRank->mCreate($items));
-        $top10 = array(
-            "testSortItem_999" => "999",
-            "testSortItem_998" => "998",
-            "testSortItem_997" => "997",
-            "testSortItem_996" => "996",
-            "testSortItem_995" => "995",
-            "testSortItem_994" => "994",
-            "testSortItem_993" => "993",
-            "testSortItem_992" => "992",
-            "testSortItem_991" => "991",
-            "testSortItem_990" => "990"
-        );
-        $down10 = array(
-            "testSortItem_0" => "0",
-            "testSortItem_1" => "1",
-            "testSortItem_2" => "2",
-            "testSortItem_3" => "3",
-            "testSortItem_4" => "4",
-            "testSortItem_5" => "5",
-            "testSortItem_6" => "6",
-            "testSortItem_7" => "7",
-            "testSortItem_8" => "8",
-            "testSortItem_9" => "9"
-        );
-        $this->counterRank->mCreate($items);
+        $this->assertEquals(count($this->testData['items']), $this->counterRank->mCreate($this->testData['items']));
         $this->jsHandler->handleRank($this->tokens[$this->groupName], $this->groupName, 'asc', 10);
-        $this->assertEquals(json_encode($down10), $this->jsHandler->getLastOutput());
+        $this->assertEquals(json_encode($this->testData['down10']), $this->jsHandler->getLastOutput());
 
         $this->jsHandler->handleRank($this->tokens[$this->groupName], $this->groupName, 'asc', 10, 'rankCallback');
-        $this->assertEquals('rankCallback('.json_encode($down10).');', $this->jsHandler->getLastOutput());
+        $this->assertEquals('rankCallback(' . json_encode($this->testData['down10']) . ');', $this->jsHandler->getLastOutput());
 
         $this->jsHandler->handleRank($this->tokens[$this->groupName], $this->groupName, 'desc', 10, 'rankCallback');
-        $this->assertEquals('rankCallback('.json_encode($top10).');', $this->jsHandler->getLastOutput());
+        $this->assertEquals('rankCallback(' . json_encode($this->testData['top10']) . ');', $this->jsHandler->getLastOutput());
 
         $this->jsHandler->handleTop10($this->tokens[$this->groupName], $this->groupName, 'rankCallback');
-        $this->assertEquals('rankCallback('.json_encode($top10).');', $this->jsHandler->getLastOutput());
+        $this->assertEquals('rankCallback(' . json_encode($this->testData['top10']) . ');', $this->jsHandler->getLastOutput());
 
         $this->jsHandler->handleDown10($this->tokens[$this->groupName], $this->groupName, 'rankCallback');
-        $this->assertEquals('rankCallback('.json_encode($down10).');', $this->jsHandler->getLastOutput());
+        $this->assertEquals('rankCallback(' . json_encode($this->testData['down10']) . ');', $this->jsHandler->getLastOutput());
 
     }
 
@@ -146,22 +149,23 @@ class JSClientHandlerTest extends \PHPUnit_Framework_TestCase
     {
 
 
-        $this->jsHandler->setTokenVerifier(function($operation, $userToken, $token, $group, $keys) {
-            $str = $token.$group;
-            if($keys) {
+        $this->jsHandler->setTokenVerifier(function ($operation, $userToken, $token, $group, $keys) {
+            $str = $token . $group;
+            if ($keys) {
                 $str .= $keys;
             }
             return md5($str) == $userToken;
         });
         $this->counterRank->create('testTokenVerifier', 1100);
         $this->jsHandler->handleGet(
-            md5($this->tokens['testHandleGroupName'] . $this->groupName . 'testTokenVerifier' ),
+            md5($this->tokens['testHandleGroupName'] . $this->groupName . 'testTokenVerifier'),
             $this->groupName,
             'testTokenVerifier'
         );
 
         $this->assertEquals(1100, $this->jsHandler->getLastOutput());
     }
+
     protected function tearDown()
     {
         $this->counterRank->deleteGroup($this->groupName);

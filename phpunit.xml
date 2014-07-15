@@ -7,11 +7,7 @@
         </testsuite>
     </testsuites>
 
-    <groups>
-        <exclude>
-            <group>ext-redis</group>
-        </exclude>
-    </groups>
+
 
     <filter>
         <whitelist>
