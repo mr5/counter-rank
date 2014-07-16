@@ -156,15 +156,17 @@ class CounterRankTest extends \PHPUnit_Framework_TestCase
      */
     public function testPersistHelperWithDeleting()
     {
+        $self = $this;
+
         $itemsSource = $this->testData['items'];
         $this->assertEquals(count($this->testData['items']), $this->counterRank->mCreate($itemsSource));
         $testItems = array();
 
-        $this->counterRank->persistHelper(function (array $_items) use (& $testItems) {
+        $this->counterRank->persistHelper(function (array $_items) use (& $testItems, $self) {
             $testItems = array_merge($testItems, $_items);
 
 
-            $this->assertEmpty($this->counterRank->mGet(array_keys($_items)));
+            $self->assertEmpty($this->counterRank->mGet(array_keys($_items)));
 
             unset($_items);
         }, CounterRank::PERSIST_WITH_DELETING);
