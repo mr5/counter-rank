@@ -18,7 +18,7 @@ class CounterRankTest extends \PHPUnit_Framework_TestCase
     /**
      * @var \mr5\counterRank\CounterRank
      */
-    private $counterRank = null;
+    public  $counterRank = null;
     /**
      * @var string
      */
