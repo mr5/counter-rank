@@ -166,7 +166,7 @@ class CounterRankTest extends \PHPUnit_Framework_TestCase
             $testItems = array_merge($testItems, $_items);
 
 
-            $self->assertEmpty($this->counterRank->mGet(array_keys($_items)));
+            $self->assertEmpty($self->counterRank->mGet(array_keys($_items)));
 
             unset($_items);
         }, CounterRank::PERSIST_WITH_DELETING);
