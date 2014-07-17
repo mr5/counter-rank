@@ -206,11 +206,12 @@ class CounterRankTest extends \PHPUnit_Framework_TestCase
      */
     public function testPersistHelperWithClearing()
     {
+        $self = $this;
         $itemsSource = $this->testData['items'];
         $this->assertEquals(count($this->testData['items']), $this->counterRank->mCreate($itemsSource));
         $testItems = array();
 
-        $this->counterRank->persistHelper(function (array $_items) use (& $testItems) {
+        $this->counterRank->persistHelper(function (array $_items) use (& $testItems, $self) {
             $testItems = array_merge($testItems, $_items);
 
             $itemsExcepted = array();
@@ -218,7 +219,7 @@ class CounterRankTest extends \PHPUnit_Framework_TestCase
                 $itemsExcepted[$key] = 0;
             }
 
-            $this->assertEquals($itemsExcepted, $this->counterRank->mGet(array_keys($_items)));
+            $self->assertEquals($itemsExcepted, $self->counterRank->mGet(array_keys($_items)));
 
             unset($_items);
             unset($itemsExcepted);
