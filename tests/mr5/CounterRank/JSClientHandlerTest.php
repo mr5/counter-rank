@@ -80,7 +80,12 @@ class JSClientHandlerTest extends \PHPUnit_Framework_TestCase
     public function testHandleGet()
     {
 
-        $this->jsHandler->handleGet($this->tokens[$this->groupName], $this->groupName, 'testHandleGetKey', 'testCallback');
+        $this->jsHandler->handleGet(
+            $this->tokens[$this->groupName],
+            $this->groupName,
+            'testHandleGetKey',
+            'testCallback'
+        );
         $this->assertEquals("testCallback(null);", $this->jsHandler->getLastOutput());
 
         $this->counterRank->create('testGet', 1);
@@ -93,8 +98,16 @@ class JSClientHandlerTest extends \PHPUnit_Framework_TestCase
 
         $this->counterRank->create('testGet2', 2);
         $this->counterRank->create('testGet3', 3);
-        $this->jsHandler->handleGet($this->tokens[$this->groupName], $this->groupName, 'testGet_testGet2_testGet3', 'testCallback3');
-        $this->assertEquals('testCallback3({"testGet":1,"testGet2":2,"testGet3":3});', $this->jsHandler->getLastOutput());
+        $this->jsHandler->handleGet(
+            $this->tokens[$this->groupName],
+            $this->groupName,
+            'testGet_testGet2_testGet3',
+            'testCallback3'
+        );
+        $this->assertEquals(
+            'testCallback3({"testGet":1,"testGet2":2,"testGet3":3});',
+            $this->jsHandler->getLastOutput()
+        );
     }
 
     /**
@@ -104,13 +117,28 @@ class JSClientHandlerTest extends \PHPUnit_Framework_TestCase
     {
         $this->counterRank->create('testHandleIncreaseKey');
 
-        $this->jsHandler->handleIncrease($this->tokens[$this->groupName], $this->groupName, 'testHandleIncreaseKey', 'increaseCallback');
+        $this->jsHandler->handleIncrease(
+            $this->tokens[$this->groupName],
+            $this->groupName,
+            'testHandleIncreaseKey',
+            'increaseCallback'
+        );
         $this->assertEquals('increaseCallback(1);', $this->jsHandler->getLastOutput());
         // 不存在的 key
-        $this->jsHandler->handleIncrease($this->tokens[$this->groupName], $this->groupName, 'testHandleIncreaseKeyDoesNotExist', 'increaseCallback');
+        $this->jsHandler->handleIncrease(
+            $this->tokens[$this->groupName],
+            $this->groupName,
+            'testHandleIncreaseKeyDoesNotExist',
+            'increaseCallback'
+        );
         $this->assertEquals('increaseCallback(null);', $this->jsHandler->getLastOutput());
 
-        $this->jsHandler->handleIncrease($this->tokens[$this->groupName], $this->groupName, 'testHandleIncreaseKey', 'increaseCallback');
+        $this->jsHandler->handleIncrease(
+            $this->tokens[$this->groupName],
+            $this->groupName,
+            'testHandleIncreaseKey',
+            'increaseCallback'
+        );
         $this->assertEquals('increaseCallback(2);', $this->jsHandler->getLastOutput());
 
         $this->jsHandler->handleIncrease($this->tokens[$this->groupName], $this->groupName, 'testHandleIncreaseKey');
@@ -129,16 +157,28 @@ class JSClientHandlerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(json_encode($this->testData['down10']), $this->jsHandler->getLastOutput());
 
         $this->jsHandler->handleRank($this->tokens[$this->groupName], $this->groupName, 'asc', 10, 'rankCallback');
-        $this->assertEquals('rankCallback(' . json_encode($this->testData['down10']) . ');', $this->jsHandler->getLastOutput());
+        $this->assertEquals(
+            'rankCallback(' . json_encode($this->testData['down10']) . ');',
+            $this->jsHandler->getLastOutput()
+        );
 
         $this->jsHandler->handleRank($this->tokens[$this->groupName], $this->groupName, 'desc', 10, 'rankCallback');
-        $this->assertEquals('rankCallback(' . json_encode($this->testData['top10']) . ');', $this->jsHandler->getLastOutput());
+        $this->assertEquals(
+            'rankCallback(' . json_encode($this->testData['top10']) . ');',
+            $this->jsHandler->getLastOutput()
+        );
 
         $this->jsHandler->handleTop10($this->tokens[$this->groupName], $this->groupName, 'rankCallback');
-        $this->assertEquals('rankCallback(' . json_encode($this->testData['top10']) . ');', $this->jsHandler->getLastOutput());
+        $this->assertEquals(
+            'rankCallback(' . json_encode($this->testData['top10']) . ');',
+            $this->jsHandler->getLastOutput()
+        );
 
         $this->jsHandler->handleDown10($this->tokens[$this->groupName], $this->groupName, 'rankCallback');
-        $this->assertEquals('rankCallback(' . json_encode($this->testData['down10']) . ');', $this->jsHandler->getLastOutput());
+        $this->assertEquals(
+            'rankCallback(' . json_encode($this->testData['down10']) . ');',
+            $this->jsHandler->getLastOutput()
+        );
 
     }
 
@@ -149,13 +189,15 @@ class JSClientHandlerTest extends \PHPUnit_Framework_TestCase
     {
 
 
-        $this->jsHandler->setTokenVerifier(function ($operation, $userToken, $token, $group, $keys) {
-            $str = $token . $group;
-            if ($keys) {
-                $str .= $keys;
+        $this->jsHandler->setTokenVerifier(
+            function ($operation, $userToken, $token, $group, $keys) {
+                $str = $token . $group;
+                if ($keys) {
+                    $str .= $keys;
+                }
+                return md5($str) == $userToken;
             }
-            return md5($str) == $userToken;
-        });
+        );
         $this->counterRank->create('testTokenVerifier', 1100);
         $this->jsHandler->handleGet(
             md5($this->tokens['testHandleGroupName'] . $this->groupName . 'testTokenVerifier'),

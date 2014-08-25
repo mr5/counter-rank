@@ -74,7 +74,7 @@ class CounterRank
      *
      * @var string 分组名
      */
-    private $groupName = NULL;
+    private $groupName = null;
 
     /**
      * @var bool 是否使用浮点数
@@ -86,25 +86,8 @@ class CounterRank
      *
      * @var \Closure
      */
-    private $fixMissClosure = null;
-    /**
-     * 使用 persistHelper 持久化后不执行任何操作
-     *
-     * @see CounterRank::persistHelper()
-     */
-    const PERSIST_WITH_NOTHING = 0;
-    /**
-     * 使用 persistHelper 持久化后删除 item
-     *
-     * @see CounterRank::persistHelper()
-     */
-    const PERSIST_WITH_DELETING = 1;
-    /**
-     * 使用 persistHelper 持久化后清零 item
-     *
-     * @see CounterRank::persistHelper()
-     */
-    const PERSIST_WITH_CLEARING = 2;
+    private $missHandlerClosure = null;
+
 
     /**
      * construct
@@ -270,8 +253,8 @@ class CounterRank
     private function checkExist($key)
     {
         if (!is_numeric($this->get($key))) {
-            if ($this->fixMissClosure != null
-                && call_user_func_array($this->fixMissClosure, array($key, $this))
+            if ($this->missHandlerClosure != null
+                && call_user_func_array($this->missHandlerClosure, array($key, $this))
             ) {
                 return true;
             }
@@ -375,74 +358,30 @@ class CounterRank
     /**
      * 设置当操作一个不存在的 keys 时的处理闭包。该闭包将接收两个参数，第一个参数是 key ，第二个参数是当前 CounterRank 对象。如修复后该 key 可以操作时返回 true，否则返回 false。
      *
-     * @param \Closure $fixMissClosure 要 fix 的key
+     * @param \Closure $missHandlerClosure 当 key 不存在时的处理函数
      */
-    public function setFixMiss(\Closure $fixMissClosure)
+    public function setMissHandler(\Closure $missHandlerClosure)
     {
-        $this->fixMissClosure = $fixMissClosure;
+        $this->missHandlerClosure = $missHandlerClosure;
     }
 
     /**
      * 移除 fixMiss 闭包
      */
-    public function removeFixMiss()
+    public function removeMissHandler()
     {
-        $this->fixMissClosure = null;
+        $this->missHandlerClosure = null;
     }
 
     /**
-     * 持久化帮助方法，可以遍历计数器中所有的元素
+     * 获取当前分组的迭代器，可以使用 foreach 语法迭代出指定分组内所有的 item
      *
-     * @param callable $callback 回调函数，参数是一个键值对数组
-     * @param int $opAfter 后置操作，参考本类中 PERSIST_WITH_ 打头的常量，默认不执行任何操作
-     *
-     * @throws \InvalidArgumentException
+     * @param int $perSize 每次迭代的数量
+     * @param int $opAfter 迭代后的操作
+     * @return CounterIterator
      */
-    public function persistHelper(\Closure $callback, $opAfter = self::PERSIST_WITH_NOTHING)
+    public function getIterator($perSize = 100, $opAfter = CounterIterator::PERSIST_WITH_NOTHING)
     {
-        $total = $this->redis->zCard($this->groupName);
-
-        for ($i = 0; $i < $total; $i += 100) {
-
-            $break = false;
-            if (!in_array($opAfter, array(self::PERSIST_WITH_NOTHING, self::PERSIST_WITH_DELETING, self::PERSIST_WITH_CLEARING))) {
-                throw new \InvalidArgumentException('$opAfter(第二个) 参数不正确，请参考本类中 PERSIST_WITH_ 打头的常量。');
-            }
-            $start = 0;
-            $end = 100;
-
-            if($opAfter === self::PERSIST_WITH_NOTHING) {
-                $start = $i;
-                $end = $i + 100;
-            }
-
-            $items = $this->redis->zRevRange($this->groupName, $start, $end, true);
-
-            // 删除
-            if ($opAfter === self::PERSIST_WITH_DELETING) {
-                $params = array_merge(array($this->groupName), array_keys($items));
-                call_user_func_array(array($this->redis, 'zRem'), $params);
-                unset($params);
-            } // 清零
-            elseif ($opAfter === self::PERSIST_WITH_CLEARING) {
-                foreach ($items as $key => $val) {
-                    if ($items[$key] == 0) {
-                        unset($items[$key]);
-                        $break = true;
-                    } else {
-                        // 减去取出时的值
-                        $this->redis->zIncrBy($this->groupName, 0 - $val, $key);
-                    }
-                }
-            }
-
-            call_user_func($callback, $items);
-
-            if ($break) {
-                break;
-            }
-
-            unset($items);
-        }
+        return new CounterIterator($this->redis, $this->groupName, $perSize, $opAfter);
     }
 }

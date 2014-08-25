@@ -92,7 +92,7 @@ class JSClientHandler
     /**
      * @var CounterRank
      */
-    private $counterRank = NULL;
+    private $counterRank = null;
     /**
      * @var string 多个键间的分隔符
      */
@@ -127,8 +127,16 @@ class JSClientHandler
      * @param bool $useFloat 是否使用浮点数，默认不使用
      * @param bool $isOutput 是否输出，默认输出。不管是否输出，都可以通过 getLastOutput() 获取最后一次的输出数据
      */
-    public function __construct($redis_host, $redis_port, $namespace, array $tokens, $increaseStepSize = 1, $keysSeparator = '_', $useFloat = false, $isOutput = true)
-    {
+    public function __construct(
+        $redis_host,
+        $redis_port,
+        $namespace,
+        array $tokens,
+        $increaseStepSize = 1,
+        $keysSeparator = '_',
+        $useFloat = false,
+        $isOutput = true
+    ) {
         $this->tokens = $tokens;
         $this->namespace = trim($namespace);
         $this->increaseStepSize = $increaseStepSize;
@@ -253,7 +261,14 @@ class JSClientHandler
         if (!$userHash) {
             $this->outputError('token 未指定');
         }
-        if (!isset($this->tokens[$userGroupName]) || !$this->verifyToken($operation, $userHash, $this->tokens[$userGroupName], $userGroupName, $keys)) {
+        if (!isset($this->tokens[$userGroupName]) || !$this->verifyToken(
+                $operation,
+                $userHash,
+                $this->tokens[$userGroupName],
+                $userGroupName,
+                $keys
+            )
+        ) {
             $this->outputError('token 不正确');
         }
         $userGroupName = trim($userGroupName);

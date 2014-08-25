@@ -18,7 +18,7 @@ class CounterRankTest extends \PHPUnit_Framework_TestCase
     /**
      * @var \mr5\counterRank\CounterRank
      */
-    public  $counterRank = null;
+    public $counterRank = null;
     /**
      * @var string
      */
@@ -77,10 +77,15 @@ class CounterRankTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals(1, $this->counterRank->create('testDeleteGroup', 1));
 
-        $this->assertEquals(2, $this->counterRank->mCreate(array(
-            'testDeleteGroup2' => 2,
-            'testDeleteGroup3' => 3
-        )));
+        $this->assertEquals(
+            2,
+            $this->counterRank->mCreate(
+                array(
+                    'testDeleteGroup2' => 2,
+                    'testDeleteGroup3' => 3
+                )
+            )
+        );
 
         $this->assertEquals(1, $this->counterRank->get('testDeleteGroup'));
         $this->assertEquals(2, $this->counterRank->get('testDeleteGroup2'));
@@ -154,68 +159,66 @@ class CounterRankTest extends \PHPUnit_Framework_TestCase
     /**
      * 持久化帮助方法测试，持久化后删除
      */
-    public function testPersistHelperWithDeleting()
+    public function testPersistenceWithDeleting()
     {
         $self = $this;
 
         $itemsSource = $this->testData['items'];
         $this->assertEquals(count($this->testData['items']), $this->counterRank->mCreate($itemsSource));
+
         $testItems = array();
-
-        $this->counterRank->persistHelper(function (array $_items) use (& $testItems, $self) {
+        foreach ($this->counterRank->getIterator(100, CounterIterator::PERSIST_WITH_DELETING) as $_items) {
             $testItems = array_merge($testItems, $_items);
-
-
             $self->assertEmpty($self->counterRank->mGet(array_keys($_items)));
-
             unset($_items);
-        }, CounterRank::PERSIST_WITH_DELETING);
+        }
 
         arsort($itemsSource);
-        $this->assertEquals(json_encode($itemsSource) , json_encode($testItems));
-        unset($fileContentExcepted);
+        arsort($testItems);
+
+        $this->assertEquals(json_encode($itemsSource), json_encode($testItems));
         unset($itemsSource);
     }
+
     /**
      * 持久化帮助方法测试，持久化后不执行任何操作
      */
-    public function testPersistHelperWithNothing()
+    public function testPersistenceWithNothing()
     {
         $self = $this;
 
         $itemsSource = $this->testData['items'];
         $this->assertEquals(count($this->testData['items']), $this->counterRank->mCreate($itemsSource));
         $testItems = array();
-        $this->counterRank->persistHelper(function (array $_items) use (& $testItems, $self) {
+
+        foreach ($this->counterRank->getIterator() as $_items) {
             $testItems = array_merge($testItems, $_items);
 
             $self->assertEquals($_items, $self->counterRank->mGet(array_keys($_items)));
-
             unset($_items);
-        }, CounterRank::PERSIST_WITH_NOTHING);
-
+        }
         arsort($itemsSource);
 
-
-        $this->assertEquals(json_encode($itemsSource) , json_encode($testItems));
+        $this->assertEquals(json_encode($itemsSource), json_encode($testItems));
         unset($itemsSource);
         unset($testItems);
     }
+
     /**
      * 持久化帮助方法测试，持久化后清零
      */
-    public function testPersistHelperWithClearing()
+    public function testPersistenceWithClearing()
     {
         $self = $this;
         $itemsSource = $this->testData['items'];
         $this->assertEquals(count($this->testData['items']), $this->counterRank->mCreate($itemsSource));
         $testItems = array();
 
-        $this->counterRank->persistHelper(function (array $_items) use (& $testItems, $self) {
+        foreach ($this->counterRank->getIterator(100, CounterIterator::PERSIST_WITH_CLEARING) as $_items) {
             $testItems = array_merge($testItems, $_items);
 
             $itemsExcepted = array();
-            foreach($_items AS $key=>$_v) {
+            foreach ($_items AS $key => $_v) {
                 $itemsExcepted[$key] = 0;
             }
 
@@ -223,11 +226,12 @@ class CounterRankTest extends \PHPUnit_Framework_TestCase
 
             unset($_items);
             unset($itemsExcepted);
-        }, CounterRank::PERSIST_WITH_CLEARING);
+        }
+
 
         arsort($itemsSource);
         unset($itemsSource['testSortItem_0']);
-        $this->assertEquals(json_encode($itemsSource) , json_encode($testItems));
+        $this->assertEquals(json_encode($itemsSource), json_encode($testItems));
         unset($fileContentExcepted);
         unset($testItems);
     }
@@ -236,13 +240,15 @@ class CounterRankTest extends \PHPUnit_Framework_TestCase
     /**
      * 测试 fixMiss 闭包
      */
-    public function testFixMiss()
+    public function testMissHandler()
     {
         $this->assertNull($this->counterRank->increase('inexistense', 10));
 
-        $this->counterRank->setFixMiss(function ($key, CounterRank $counterRank) {
-            return $counterRank->create($key, 1000) > 0;
-        });
+        $this->counterRank->setMissHandler(
+            function ($key, CounterRank $counterRank) {
+                return $counterRank->create($key, 1000) > 0;
+            }
+        );
 
         $this->assertEquals(1010, $this->counterRank->increase('inexistense', 10));
 

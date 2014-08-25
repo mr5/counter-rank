@@ -11,9 +11,10 @@ services:
 
 before_script:
   - echo "extension = redis.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
-  - phpenv rehash
   - travis_retry composer self-update
   - travis_retry composer install --prefer-source --no-interaction --dev
-
+  - pyrus install pear/PHP_CodeSniffer
+  - phpenv rehash
 script:
   - vendor/bin/phpunit --verbose
+  - phpcs --standard=PSR2 --extensions=php --ignore=vendor/* --warning-severity=0 ./
