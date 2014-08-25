@@ -208,11 +208,7 @@ $jsClientHandler->setTokenVerifier(function (
 
 ## 持久化计数数据
 
- [`CounterRank`](lib/mr5/CounterRank/CounterRank) 类提供了一个名为 `persistHelper` 方法来帮助你持久化计数器中的数据，如同步到 MySQL 数据库。`persistHelper` 方法接收两个参数，第一个参数是一个闭包，该闭包包含了你自定义的同步逻辑，闭包的参数是 items 键值对数组。第二个参数有三个选项：
- 
- * `CounterRank::PERSIST_WITH_DELETING`  持久化后的 items 删除，使用场景为使用 CounterRank 统计全量数据。一般需要配合 `$counterRank->setMissFix()` 来初始化不存在的键。
- * `CounterRank::PERSIST_WITH_CLEARING`  持久化后的 items 清零，使用场景为使用 CounterRank 统计增量数据，在比如 MySQL 之类的持久化数据库系统中保留全量数据。
- * `CounterRank::PERSIST_WITH_NOTHING`   持久化后不执行任何操作，使用场景为使用 redis 统计全量数据，并且作为主要持久化途径，其他持久化途径仅作为备份。
+ [`CounterRank`](lib/mr5/CounterRank/CounterRank) 类提供了一个迭代器，通过 getIterator() 方法来获取迭代器，并迭代出计数器中所有的数据
 
 下面是一个同步到数据库的例子：
 
@@ -229,7 +225,7 @@ $conn = mysql_connect('localhost', 'username', 'password');
 mysql_select_db('dbname', $conn);
 mysql_set_charset('utf8', $conn);
 
-$counterRank->persistHelper(function($items) {
+foreach($counterRank->getIterator() as $items) {
     $values = '';
     foreach($items AS $post_id=>$heat) {
         if($values != '') {
