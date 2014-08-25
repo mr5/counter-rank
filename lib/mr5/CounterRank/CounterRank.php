@@ -350,7 +350,7 @@ class CounterRank
     {
 
         if ($this->namespace) {
-            $groupName = $this->namespace . ':' . $groupName;;
+            $groupName = $this->namespace . ':' . $groupName;
         }
         return $groupName;
     }

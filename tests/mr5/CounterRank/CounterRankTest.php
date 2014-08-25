@@ -218,7 +218,7 @@ class CounterRankTest extends \PHPUnit_Framework_TestCase
             $testItems = array_merge($testItems, $_items);
 
             $itemsExcepted = array();
-            foreach ($_items AS $key => $_v) {
+            foreach ($_items as $key => $_v) {
                 $itemsExcepted[$key] = 0;
             }
 

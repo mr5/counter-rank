@@ -89,8 +89,7 @@ class CounterIterator implements \Iterator
                 --$this->position;
             }
 
-        } // 清零
-        elseif ($this->opAfter === self::PERSIST_WITH_CLEARING) {
+        } elseif ($this->opAfter === self::PERSIST_WITH_CLEARING) {
             if ($items) {
                 --$this->endPosition;
                 --$this->position;
