@@ -8,7 +8,6 @@
     </testsuites>
 
 
-
     <filter>
         <whitelist>
             <directory suffix=".php">lib/mr5/</directory>
@@ -17,9 +16,9 @@
 
     <php>
         <!-- Redis -->
-        <const name="REDIS_SERVER_HOST" value="127.0.0.1" />
-        <const name="REDIS_SERVER_PORT" value="6379" />
-        <const name="REDIS_NAMESPACE" value="__unitTest___" />
+        <const name="REDIS_SERVER_HOST" value="127.0.0.1"/>
+        <const name="REDIS_SERVER_PORT" value="6379"/>
+        <const name="REDIS_NAMESPACE" value="__unitTest___"/>
 
     </php>
 </phpunit>

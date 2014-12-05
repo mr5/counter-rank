@@ -2,7 +2,11 @@
     "name": "mr5/counter-rank",
     "type": "library",
     "description": "counter and rank with redis",
-    "keywords": ["counter", "rank", "redis"],
+    "keywords": [
+        "counter",
+        "rank",
+        "redis"
+    ],
     "homepage": "http://github.com/mr5/counter-rank",
     "license": "MIT",
     "authors": [

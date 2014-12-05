@@ -34,8 +34,10 @@ class JSClientHandlerTest extends \PHPUnit_Framework_TestCase
 
     protected function setUp()
     {
-        $this->counterRank = new CounterRank(REDIS_SERVER_HOST, REDIS_SERVER_PORT, REDIS_NAMESPACE, $this->groupName, false);
-        $this->jsHandler = new JSClientHandler(REDIS_SERVER_HOST, REDIS_SERVER_PORT, REDIS_NAMESPACE, $this->tokens, 1, '_', false, false);
+        $this->counterRank = new CounterRank(REDIS_SERVER_HOST, REDIS_SERVER_PORT, REDIS_NAMESPACE, $this->groupName,
+            false);
+        $this->jsHandler = new JSClientHandler(REDIS_SERVER_HOST, REDIS_SERVER_PORT, REDIS_NAMESPACE, $this->tokens, 1,
+            '_', false, false);
 
         $this->testData['items'] = array();
 
