@@ -258,5 +258,4 @@ class CounterRankTest extends \PHPUnit_Framework_TestCase
     {
         $this->counterRank->deleteGroup($this->groupName);
     }
-
 }

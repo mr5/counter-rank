@@ -262,12 +262,12 @@ class JSClientHandler
             $this->outputError('token 未指定');
         }
         if (!isset($this->tokens[$userGroupName]) || !$this->verifyToken(
-                $operation,
-                $userHash,
-                $this->tokens[$userGroupName],
-                $userGroupName,
-                $keys
-            )
+            $operation,
+            $userHash,
+            $this->tokens[$userGroupName],
+            $userGroupName,
+            $keys
+        )
         ) {
             $this->outputError('token 不正确');
         }
