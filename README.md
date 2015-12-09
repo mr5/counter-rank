@@ -1,5 +1,4 @@
 [![Build Status](https://travis-ci.org/mr5/counter-rank.svg)](https://travis-ci.org/mr5/counter-rank)
-[![Still Maintained](http://stillmaintained.com/mr5/counter-rank.png)](http://stillmaintained.com/mr5/counter-rank)
 [![License](https://poser.pugx.org/mr5/counter-rank/license.svg)](https://packagist.org/packages/mr5/counter-rank)
 
 ## 简介
